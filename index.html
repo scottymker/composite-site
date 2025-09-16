@@ -13,43 +13,33 @@
     --radius:14px; --shadow:0 6px 18px rgba(0,0,0,.25);
   }
   *{box-sizing:border-box}
-  body{
-    margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,Helvetica,sans-serif;
-    background:linear-gradient(180deg,#0b1020 0%,#0c172f 100%); color:var(--ink);
-  }
+  body{ margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,Helvetica,sans-serif;
+    background:linear-gradient(180deg,#0b1020 0%,#0c172f 100%); color:var(--ink); }
   header{padding:22px 20px 10px; text-align:center}
   header h1{margin:.2rem 0 0; font-size:1.35rem; font-weight:700; letter-spacing:.2px}
   header p{margin:.3rem 0 0; color:var(--muted); font-size:.95rem}
 
   .wrap{max-width:1180px; margin:0 auto; padding:8px 18px 70px}
-  .card{
-    background:rgba(9,14,28,.6); backdrop-filter: blur(10px);
-    border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow);
-    margin-top:16px;
-  }
+  .card{ background:rgba(9,14,28,.6); backdrop-filter: blur(10px);
+    border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); margin-top:16px; }
   .card h2{font-size:1rem; font-weight:700; margin:0; padding:16px 16px 0}
   .card .body{padding:16px}
-
   .grid-2{display:grid; grid-template-columns:1.1fr .9fr; gap:16px}
-  @media (max-width: 980px){ .grid-2{grid-template-columns:1fr;} }
+  @media (max-width:980px){ .grid-2{grid-template-columns:1fr} }
 
-  .drop{
-    border:2px dashed #2a3b61; border-radius:12px; padding:18px; text-align:center; color:var(--muted);
-    transition:.2s border-color,.2s background;
-  }
+  .drop{ border:2px dashed #2a3b61; border-radius:12px; padding:18px; text-align:center; color:var(--muted);
+    transition:.2s border-color,.2s background; }
   .drop.drag{border-color:var(--accent); background:rgba(14,165,233,.08); color:var(--ink)}
   .drop input{display:none}
+
   .thumbs{display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:12px; margin-top:12px}
-  .thumb{
-    border:1px solid var(--border); border-radius:10px; overflow:hidden; background:#0e1425;
-    aspect-ratio: 4/5; display:flex; align-items:center; justify-content:center; position:relative;
-  }
+  .thumb{ border:1px solid var(--border); border-radius:10px; overflow:hidden; background:#0e1425;
+    aspect-ratio:4/5; display:flex; align-items:center; justify-content:center; position:relative; }
   .thumb img{width:100%; height:100%; object-fit:cover}
-  .thumb .label{
-    position:absolute; left:0; right:0; bottom:0; background:linear-gradient(180deg,rgba(0,0,0,0) 0,rgba(0,0,0,.55) 85%);
+  .thumb .label{ position:absolute; left:0; right:0; bottom:0;
+    background:linear-gradient(180deg,rgba(0,0,0,0) 0,rgba(0,0,0,.55) 85%);
     color:#fff; font-size:.78rem; padding:6px 8px; text-shadow:0 1px 2px rgba(0,0,0,.5);
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  }
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
   .row{display:flex; gap:10px; flex-wrap:wrap}
   .controls{display:grid; grid-template-columns:repeat(2,1fr); gap:12px}
@@ -58,21 +48,19 @@
   .controls input[type="number"], .controls input[type="text"], .controls select, .controls input[type="color"]{
     width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:#0d1528; color:var(--ink);
   }
-  .controls input[type="checkbox"]{transform: translateY(1px)}
   .help{font-size:.8rem; color:var(--muted); margin-top:4px}
   .btns{display:flex; flex-wrap:wrap; gap:10px; margin-top:12px}
-  button,.btn{
-    appearance:none; border:1px solid #254060; background:#102036; color:#dce7f5;
-    padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:600;
-  }
+  button,.btn{ appearance:none; border:1px solid #254060; background:#102036; color:#dce7f5;
+    padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:600; }
   button.primary{background:var(--accent); border-color:#0ea5e9; color:#00121a}
   button:disabled{opacity:.6; cursor:not-allowed}
   .small{font-size:.85rem; color:var(--muted)}
 
   .bg-list{display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px}
   .bg-card{border:1px solid var(--border); border-radius:10px; overflow:hidden; background:#0e1425}
-  .bg-card label{display:block; padding:8px 10px; border-top:1px solid var(--border); font-size:.85rem; color:var(--muted)}
   .bg-card img{display:block; width:100%; height:100px; object-fit:cover}
+  .bg-choose{display:flex; align-items:center; gap:8px; padding:8px 10px; border-top:1px solid var(--border)}
+  .bg-choose.active{background:#0f1c33}
 
   #output{padding:16px; display:grid; gap:16px}
   canvas{width:100%; height:auto; image-rendering:crisp-edges; background:#fff; border-radius:8px}
@@ -86,7 +74,7 @@
 
 <div class="wrap">
 
-  <!-- ========== UPLOADS (TOP) ========== -->
+  <!-- UPLOADS -->
   <section class="card" id="uploads">
     <h2>1) Uploads</h2>
     <div class="body grid-2">
@@ -109,9 +97,8 @@
               <label for="csvPick" class="btn">Browse CSV</label>
             </div>
             <input id="csvPick" type="file" accept=".csv,text/csv">
-            <div class="small" style="margin-top:6px">
-              Headers accepted: <code>name</code> OR <code>first,last</code>. Optional <code>filename</code> to match a photo.<br>
-              Example: <code>first,last,filename</code>
+            <div class="small" id="csvStatus" style="margin-top:6px">
+              Headers accepted: <code>name</code> or <code>first,last</code>. You can add a <code>filename</code> column to match images.
             </div>
             <div class="row" style="gap:10px; margin-top:10px">
               <label class="small">Sort by
@@ -148,14 +135,14 @@
             </div>
           </div>
 
-          <!-- Backgrounds 1–10 -->
+          <!-- Backgrounds -->
           <div class="drop" id="bgDrop">
             <div class="row" style="justify-content:space-between; align-items:center">
               <div><strong>Backgrounds</strong> (up to 10)</div>
               <label for="bgPick" class="btn">Upload Backgrounds</label>
             </div>
             <input id="bgPick" type="file" accept="image/*" multiple>
-            <div class="small" style="margin-top:6px">They’ll be titled <em>Background 1…10</em>. Pick one below.</div>
+            <div class="small" style="margin-top:6px">They’ll be titled <em>Background 1…10</em>. The first one auto-selects.</div>
             <div id="bgList" class="bg-list" style="margin-top:10px"></div>
           </div>
         </div>
@@ -163,7 +150,7 @@
     </div>
   </section>
 
-  <!-- ========== SETTINGS (MIDDLE) ========== -->
+  <!-- SETTINGS -->
   <section class="card">
     <h2>2) Settings</h2>
     <div class="body controls">
@@ -217,9 +204,9 @@
         <div style="flex:1">
           <label>Show names under photos
             <select id="showNames">
-              <option value="auto">Auto (on if CSV)</option>
+              <option value="auto" selected>Auto (on if CSV)</option>
               <option value="on">On</option>
-              <option value="off" selected>Off</option>
+              <option value="off">Off</option>
             </select>
           </label>
         </div>
@@ -229,7 +216,6 @@
         <div style="flex:1">
           <label>Name font size (px)</label>
           <input id="nameSize" type="number" value="36" min="14" step="2">
-          <div class="help">Used when names are shown.</div>
         </div>
         <div style="flex:1">
           <label>Header font size (px)</label>
@@ -260,7 +246,7 @@
     </div>
   </section>
 
-  <!-- ========== OUTPUT & EXPORT (BOTTOM) ========== -->
+  <!-- OUTPUT -->
   <section class="card">
     <h2>3) Output & Export</h2>
     <div class="body">
@@ -272,13 +258,14 @@
 
 <script>
 (() => {
-  // ------ Elements
+  // Elements
   const drop = document.getElementById('drop');
   const filePick = document.getElementById('filePick');
   const thumbs = document.getElementById('thumbs');
 
   const csvPick = document.getElementById('csvPick');
   const csvDrop = document.getElementById('csvDrop');
+  const csvStatus = document.getElementById('csvStatus');
   const sortBy = document.getElementById('sortBy');
   const sortDir = document.getElementById('sortDir');
   const applySort = document.getElementById('applySort');
@@ -311,29 +298,26 @@
   const output = document.getElementById('output');
   const downloads = document.getElementById('downloads');
 
-  // ------ State
+  // State
   let images = [];      // [{img, url, w, h, fileName, name?, first?, last?}]
   let namesCSV = [];    // [{first?, last?, name, filename?}]
   let logo = null;      // {img, w, h}
-  let backgrounds = []; // [{img, w, h, label}]  (max 10)
+  let backgrounds = []; // [{img, w, h, label, url}]  (max 10)
   let bgIndex = -1;     // selected background index
+  let lastMatchCount = 0;
 
-  // ------ Helpers (DOM)
-  const noop = () => {};
+  // Preset
   function setPreset(){ const [w,h]=preset.value.split('x').map(n=>parseInt(n,10)); cw.value=w; ch.value=h; }
   preset.addEventListener('change', setPreset);
 
-  // Common DnD visual
+  // Drag visuals
   function addDragVisual(el){
     ['dragenter','dragover'].forEach(ev=> el.addEventListener(ev, e=>{ e.preventDefault(); e.stopPropagation(); el.classList.add('drag'); }));
     ['dragleave','drop'].forEach(ev=> el.addEventListener(ev, e=>{ e.preventDefault(); e.stopPropagation(); el.classList.remove('drag'); }));
   }
-  addDragVisual(drop);
-  addDragVisual(csvDrop);
-  addDragVisual(logoDrop);
-  addDragVisual(bgDrop);
+  [drop,csvDrop,logoDrop,bgDrop].forEach(addDragVisual);
 
-  // ------ Photo uploads
+  // Photo uploads
   drop.addEventListener('drop', e => handlePhotoFiles(e.dataTransfer.files));
   drop.addEventListener('click', () => filePick.click());
   filePick.addEventListener('change', e => handlePhotoFiles(e.target.files));
@@ -343,9 +327,10 @@
     if(!files.length) return;
     const loaded = await Promise.all(files.map(loadImageFile));
     images.push(...loaded);
-    mapNamesToImages(); // in case CSV already loaded
+    mapNamesToImages(); // if CSV already loaded
     refreshThumbs();
     btnGen.disabled = images.length === 0;
+    updateCsvStatus();
   }
 
   function loadImageFile(file){
@@ -364,16 +349,18 @@
       const d = document.createElement('div'); d.className='thumb';
       const im = document.createElement('img'); im.src = o.url; d.appendChild(im);
       const label = document.createElement('div'); label.className='label';
-      label.textContent = o.name || o.fileName || `Image ${i+1}`;
+      label.textContent = (o.name && o.name.trim()) || o.fileName || `Image ${i+1}`;
       d.appendChild(label);
       thumbs.appendChild(d);
     });
   }
 
-  // ------ CSV upload + sorting
+  // CSV upload + sorting
   csvDrop.addEventListener('drop', e => handleCSVFiles(e.dataTransfer.files));
   csvPick.addEventListener('change', e => handleCSVFiles(e.target.files));
   applySort.addEventListener('click', () => { sortImages(); refreshThumbs(); });
+  sortBy.addEventListener('change', () => { sortImages(); refreshThumbs(); });
+  sortDir.addEventListener('change', () => { sortImages(); refreshThumbs(); });
 
   async function handleCSVFiles(fileList){
     const file = Array.from(fileList).find(f=>/\.csv$/i.test(f.name));
@@ -381,76 +368,90 @@
     const text = await file.text();
     namesCSV = parseCSV(text);
     mapNamesToImages();
-    sortImages(); // if user selected something already
+    sortImages();
     refreshThumbs();
-    // If names exist and user left "Auto", turn names on
-    if (showNamesEl.value==='auto' && namesCSV.length) showNamesEl.value='on';
+    // Auto-show names when CSV present (even if user hadn't set Auto)
+    if (namesCSV.length && showNamesEl.value==='auto') showNamesEl.value='on';
+    updateCsvStatus(true);
   }
 
+  function norm(s){ return (s||'').toString().trim(); }
+  function normKey(s){ return norm(s).toLowerCase().replace(/\s+/g,' ').replace(/\s/g,'_'); }
+
   function parseCSV(text){
-    // Minimal CSV parser (handles quotes and commas)
+    // Basic CSV parser with quotes + CRLF
     const rows = [];
-    let i=0, s=text;
-    let cell='', row=[], inQuotes=false;
+    let i=0, cell='', row=[], inQ=false;
     const pushCell=()=>{ row.push(cell); cell=''; };
     const pushRow=()=>{ rows.push(row); row=[]; };
-    while(i<s.length){
-      const ch=s[i];
-      if(inQuotes){
-        if(ch==='"' && s[i+1]==='"'){ cell+='"'; i+=2; continue; }
-        if(ch==='"'){ inQuotes=false; i++; continue; }
+    while(i<text.length){
+      const ch=text[i];
+      if(inQ){
+        if(ch==='"' && text[i+1]==='"'){ cell+='"'; i+=2; continue; }
+        if(ch==='"'){ inQ=false; i++; continue; }
         cell+=ch; i++; continue;
       } else {
         if(ch===','){ pushCell(); i++; continue; }
-        if(ch==='\n' || ch==='\r'){
-          // handle CRLF
-          if(ch==='\r' && s[i+1]==='\n') i++;
-          pushCell(); pushRow(); i++; continue;
-        }
-        if(ch==='"'){ inQuotes=true; i++; continue; }
+        if(ch==='\n' || ch==='\r'){ if(ch==='\r' && text[i+1]==='\n') i++; pushCell(); pushRow(); i++; continue; }
+        if(ch==='"'){ inQ=true; i++; continue; }
         cell+=ch; i++; continue;
       }
     }
     pushCell(); pushRow();
     if(!rows.length) return [];
-    const headers = rows[0].map(h=>h.trim().toLowerCase());
-    const data = rows.slice(1).filter(r=>r.some(c=>c.trim()!==''));
+    const headersRaw = rows[0].map(normKey);
+    const data = rows.slice(1).filter(r=>r.some(c=>norm(c)!==''));
+
+    // Map common header variants
+    const idx = (aliases)=> {
+      for (const a of aliases){ const k=normKey(a); const p=headersRaw.indexOf(k); if(p>-1) return p; }
+      return -1;
+    };
+    const iFirst = idx(['first','first_name','first name']);
+    const iLast  = idx(['last','last_name','last name','surname']);
+    const iName  = idx(['name','student','student_name','student name','full_name','full name']);
+    const iFile  = idx(['filename','file','photo','image','image_name','image name']);
+
     return data.map(r=>{
-      const obj={};
-      headers.forEach((h,idx)=>{ obj[h]= (r[idx]||'').trim(); });
-      // Normalize
-      const first = obj['first name']??obj['first'];
-      const last = obj['last name']??obj['last'];
-      const name = obj['name'] || [first,last].filter(Boolean).join(' ').trim();
-      const filename = (obj['filename']||obj['image']||'').toLowerCase();
-      return {first:first||'', last:last||'', name:name||'', filename};
+      const first = iFirst>-1 ? norm(r[iFirst]) : '';
+      const last  = iLast>-1  ? norm(r[iLast])  : '';
+      let name    = iName>-1  ? norm(r[iName])  : '';
+      if(!name) name = [first,last].filter(Boolean).join(' ');
+      const filename = iFile>-1 ? norm(r[iFile]).toLowerCase() : '';
+      return {first,last,name,filename};
     });
   }
 
   function mapNamesToImages(){
-    if(!namesCSV.length) return;
-    // Map by filename if we can
+    if(!namesCSV.length) { lastMatchCount = 0; return; }
+    // Map by filename
     const byFile = new Map();
-    namesCSV.forEach(n=>{ if(n.filename) byFile.set(n.filename, n); });
+    namesCSV.forEach(n=>{ if(n.filename) byFile.set(n.filename.toLowerCase(), n); });
+    let matched = 0;
     images.forEach(img=>{
-      const byExact = byFile.get(img.fileName);
-      if(byExact){ img.first=byExact.first; img.last=byExact.last; img.name=byExact.name || `${byExact.first} ${byExact.last}`.trim(); }
+      const byExact = byFile.get((img.fileName||'').toLowerCase());
+      if(byExact){
+        img.first=byExact.first; img.last=byExact.last; img.name=byExact.name || `${byExact.first} ${byExact.last}`.trim();
+        matched++;
+      }
     });
-    // Fill remaining in sequence
+    // Fill remaining in sequence for those without a mapped name
     let seq = namesCSV.filter(n=>!n.filename);
     let idx=0;
     images.forEach(img=>{
       if(!img.name && idx<seq.length){
         const n = seq[idx++]; img.first=n.first; img.last=n.last; img.name=n.name || `${n.first} ${n.last}`.trim();
+        matched++;
       }
     });
+    lastMatchCount = matched;
   }
 
   function sortImages(){
     const key = sortBy.value;
     const dir = sortDir.value==='desc' ? -1 : 1;
     const collator = new Intl.Collator(undefined,{numeric:true,sensitivity:'base'});
-    if(key==='original') return; // keep as loaded
+    if(key==='original') return;
     const get = (o)=>{
       if(key==='first') return o.first||'';
       if(key==='last')  return o.last||'';
@@ -461,14 +462,24 @@
     images.sort((a,b)=> collator.compare(get(a), get(b)) * dir);
   }
 
-  // ------ Logo upload
+  function updateCsvStatus(justLoaded=false){
+    if(!namesCSV.length){
+      csvStatus.textContent = 'No CSV loaded. Headers accepted: name OR first,last (+ optional filename).';
+      return;
+    }
+    const msg = `CSV loaded: ${namesCSV.length} names • matched ${lastMatchCount} of ${images.length} photos` +
+                (justLoaded ? ' • (Names will appear under photos when generating)' : '');
+    csvStatus.textContent = msg;
+  }
+
+  // Logo
   logoDrop.addEventListener('drop', e => handleLogoFile(e.dataTransfer.files));
   logoPick.addEventListener('change', e => handleLogoFile(e.target.files));
   async function handleLogoFile(fileList){
     const file = Array.from(fileList).find(f => f.type.startsWith('image/'));
     if(!file) return;
     const img = await loadBlobAsImage(file);
-    logo = img; // {img,w,h}
+    logo = img;
   }
   function loadBlobAsImage(file){
     return new Promise((resolve,reject)=>{
@@ -480,7 +491,7 @@
     });
   }
 
-  // ------ Background uploads (1–10)
+  // Backgrounds (1–10)
   bgPick.addEventListener('change', e => handleBgFiles(e.target.files));
   bgDrop.addEventListener('drop', e => handleBgFiles(e.dataTransfer.files));
   async function handleBgFiles(fileList){
@@ -489,6 +500,8 @@
     const loaded = await Promise.all(files.map(loadBlobAsImage));
     loaded.forEach((o,i)=>{ o.label = `Background ${backgrounds.length + i + 1}`; });
     backgrounds.push(...loaded);
+    // Auto-select first background if none selected yet
+    if (bgIndex < 0 && backgrounds.length > 0) bgIndex = 0;
     renderBgList();
   }
 
@@ -497,35 +510,31 @@
     backgrounds.forEach((b, i)=>{
       const card = document.createElement('div'); card.className = 'bg-card';
       const img = document.createElement('img'); img.src=b.img.src; card.appendChild(img);
-      const lab = document.createElement('label');
-      const id = `bg_${i}`;
-      lab.htmlFor = id; lab.textContent = `${b.label}`;
-      const radio = document.createElement('input'); radio.type='radio'; radio.name='bgPickRadio'; radio.id=id;
-      radio.style.margin='0 8px 0 0';
+      const choose = document.createElement('div'); choose.className='bg-choose' + (i===bgIndex?' active':'');
+      const radio = document.createElement('input'); radio.type='radio'; radio.name='bgPickRadio';
       radio.checked = i===bgIndex;
-      radio.addEventListener('change', ()=>{ bgIndex = i; });
-      const wrapper = document.createElement('div'); wrapper.style.display='flex'; wrapper.style.alignItems='center'; wrapper.style.padding='8px 10px'; wrapper.style.borderTop='1px solid var(--border)';
-      wrapper.appendChild(radio); wrapper.appendChild(document.createTextNode(b.label));
-      card.appendChild(wrapper);
+      radio.addEventListener('change', ()=>{ bgIndex = i; renderBgList(); });
+      choose.appendChild(radio);
+      const txt = document.createElement('span'); txt.textContent = b.label; choose.appendChild(txt);
+      card.appendChild(choose);
       bgList.appendChild(card);
     });
   }
 
-  // ------ Generate / Clear
+  // Generate / Clear
   btnGen.addEventListener('click', onGenerate);
   btnClear.addEventListener('click', ()=>{
     images.forEach(o=> o.url && URL.revokeObjectURL(o.url));
+    backgrounds.forEach(b=> b.url && URL.revokeObjectURL(b.url));
     images = []; namesCSV = []; logo = null; backgrounds = []; bgIndex = -1;
     thumbs.innerHTML=''; bgList.innerHTML=''; output.innerHTML=''; downloads.innerHTML='';
-    btnGen.disabled = true;
-    showNamesEl.value='off';
+    btnGen.disabled = true; lastMatchCount = 0; updateCsvStatus();
   });
 
   // Enable generate if images present
-  const enableGen = () => { btnGen.disabled = images.length === 0; };
-  document.addEventListener('change', enableGen);
+  document.addEventListener('change', ()=>{ btnGen.disabled = images.length === 0; });
 
-  // ------ Core generation
+  // Generate
   function onGenerate(){
     output.innerHTML = '';
     downloads.innerHTML = '';
@@ -551,9 +560,8 @@
       return namesCSV.length>0; // auto
     })();
 
-    // Reserve header/title area
+    // Header area
     let headerPad = headerText ? Math.ceil(headerSize * 1.6) : 0;
-    // If logo present, make sure header pad accommodates it
     if (logo) headerPad = Math.max(headerPad, Math.ceil(logoH + 20));
 
     // Name label pad
@@ -568,9 +576,8 @@
       return;
     }
 
-    // Pagination logic with optional manual rows/columns
+    // Layout & pagination
     const pages = paginateTiles(images.length, wantedCols, wantedRows, contentW, contentH, G, labelPad);
-
     if (pages.tilesPerPage === 0) {
       alert('Settings produce zero tiles per page (try fewer rows/columns, smaller margins, or larger canvas).');
       return;
@@ -578,17 +585,17 @@
 
     // Build canvases
     const pageCount = pages.pageCount;
-    const placements = pages.pagePlacements; // array of pages → array of {x,y,tileW,tileH,cellH,index}
+    const placements = pages.pagePlacements;
 
     for(let p=0; p<pageCount; p++){
       const c = document.createElement('canvas');
       c.width = W; c.height = H;
       const ctx = c.getContext('2d');
 
-      // Background color
+      // Fallback color
       ctx.fillStyle = bgColor; ctx.fillRect(0,0,W,H);
 
-      // Background image (cover)
+      // Background image (cover) — now auto-selected first upload
       if (bgIndex>=0 && backgrounds[bgIndex]){
         drawCover(ctx, backgrounds[bgIndex].img, 0,0,W,H);
       }
@@ -601,17 +608,14 @@
         ctx.drawImage(logo.img, x, y, w, logoH);
       }
       if (headerText){
-        const lum = approxLuminance(bgColor); // fallback only; BG image varies—use white with dark stroke
-        const fill = lum > 0.55 ? '#111' : '#fff';
         ctx.save();
         ctx.font = `700 ${headerSize}px Inter, Arial, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
-        // Stroke for contrast
         ctx.lineWidth = Math.max(2, Math.ceil(headerSize/18));
         ctx.strokeStyle = 'rgba(0,0,0,.6)';
         ctx.strokeText(headerText, W/2, M + (headerPad - headerSize)/2);
-        ctx.fillStyle = fill;
+        ctx.fillStyle = '#ffffff';
         ctx.fillText(headerText, W/2, M + (headerPad - headerSize)/2);
         ctx.restore();
       }
@@ -629,17 +633,16 @@
         const x = contentX + cell.x;
         const y = contentY + cell.y;
 
-        // photo area: keep 4:5 inside the cell (cellH = tileH + labelPad)
         drawCropped4x5(ctx, imgObj.img, x, y, cell.tileW, cell.tileH);
 
         if (labelPad){
-          const name = imgObj.name || [imgObj.first, imgObj.last].filter(Boolean).join(' ').trim();
+          const name = (imgObj.name || [imgObj.first, imgObj.last].filter(Boolean).join(' ').trim());
           if (name){
             const tx = x + cell.tileW/2;
             const ty = y + cell.tileH + Math.max(4, Math.round(labelPad*0.18));
             ctx.lineWidth = textStroke; ctx.strokeStyle='rgba(0,0,0,.55)';
             ctx.strokeText(name, tx, ty);
-            ctx.fillStyle = '#ffffff'; // labels over photos or varied BG—white with stroke is safest
+            ctx.fillStyle = '#ffffff';
             ctx.fillText(name, tx, ty);
           }
         }
@@ -667,19 +670,15 @@
     return bits.join(' • ');
   }
 
-  // ------ Layout math
-  // Returns { pageCount, tilesPerPage, pagePlacements: [ [cells...] ] }
+  // Layout math
   function paginateTiles(count, wantedCols, wantedRows, contentW, contentH, G, labelPad){
     const ratio = 4/5; // width:height
-    const useAutoCols = wantedCols===0;
-    const useAutoRows = wantedRows===0;
+    const autoC = wantedCols===0, autoR = wantedRows===0;
 
     function score(c, r){
-      // Tile width by width constraint
       let tileW = (contentW - G*(c-1)) / c;
       let tileH = tileW / ratio;
       let cellH = tileH + labelPad;
-      // Reduce if height overflows requested rows
       const neededH = r*cellH + (r-1)*G;
       if (neededH > contentH){
         const s = contentH / neededH;
@@ -688,21 +687,19 @@
       return {tileW, tileH, cellH, perPage: c*r};
     }
 
-    let best = null, bestC=1, bestR=1;
-    if (!useAutoCols && !useAutoRows){
+    let best=null, bestC=1, bestR=1;
+    if (!autoC && !autoR){
       bestC = Math.max(1, wantedCols);
       bestR = Math.max(1, wantedRows);
       best = score(bestC, bestR);
     } else {
-      // Search small space: 1..16 cols, 1..20 rows
-      let Cmin = useAutoCols ? 1 : wantedCols, Cmax = useAutoCols ? 16 : wantedCols;
-      let Rmin = useAutoRows ? 1 : wantedRows, Rmax = useAutoRows ? 20 : wantedRows;
+      let Cmin = autoC ? 1 : wantedCols, Cmax = autoC ? 16 : wantedCols;
+      let Rmin = autoR ? 1 : wantedRows, Rmax = autoR ? 20 : wantedRows;
       let bestArea = -1;
       for (let C=Cmin; C<=Cmax; C++){
         for (let R=Rmin; R<=Rmax; R++){
           const s = score(C,R);
           if (s.perPage<1) continue;
-          // Prefer bigger tiles; tie-break by perPage (higher) then by columns (lower)
           const area = s.tileW*s.tileH;
           const better = (area>bestArea) || (area===bestArea && s.perPage>(best?.perPage||0)) || (area===bestArea && s.perPage===(best?.perPage||0) && C<(bestC||1));
           if (better){ bestArea=area; best=s; bestC=C; bestR=R; }
@@ -732,7 +729,7 @@
     return {pageCount, tilesPerPage: perPage, pagePlacements: placements};
   }
 
-  // ------ Drawing helpers
+  // Drawing helpers
   function drawCropped4x5(ctx, img, dx, dy, dw, dh){
     const target = 4/5;
     const iw = img.naturalWidth || img.width;
@@ -743,7 +740,6 @@
     else { sw = iw; sh = iw/target; sx=0; sy=(ih-sh)/2; }
     ctx.drawImage(img, sx,sy,sw,sh, dx,dy,dw,dh);
   }
-
   function drawCover(ctx, img, x,y,w,h){
     const iw = img.naturalWidth || img.width;
     const ih = img.naturalHeight || img.height;
@@ -751,15 +747,6 @@
     const dw = iw*scale, dh = ih*scale;
     const dx = x + (w-dw)/2, dy = y + (h-dh)/2;
     ctx.drawImage(img, dx,dy,dw,dh);
-  }
-
-  function approxLuminance(hex){
-    const c = (hex||'#ffffff').replace('#','');
-    const r = parseInt(c.slice(0,2),16)/255;
-    const g = parseInt(c.slice(2,4),16)/255;
-    const b = parseInt(c.slice(4,6),16)/255;
-    const lin = (u)=> (u<=0.03928? u/12.92 : Math.pow((u+0.055)/1.055,2.4));
-    return 0.2126*lin(r) + 0.7152*lin(g) + 0.0722*lin(b);
   }
 })();
 </script>
