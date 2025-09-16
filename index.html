@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Auto Composite (10×8, 4×5 Tiles)</title>
+<title>Automated Composite Builder (10×8 with 4×5 tiles)</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -17,20 +17,21 @@
     margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,Helvetica,sans-serif;
     background:linear-gradient(180deg,#0b1020 0%,#0c172f 100%); color:var(--ink);
   }
-  header{padding:24px; text-align:center}
-  header h1{margin:.2rem 0 0; font-size:1.4rem; font-weight:700; letter-spacing:.2px}
+  header{padding:22px 20px 10px; text-align:center}
+  header h1{margin:.2rem 0 0; font-size:1.35rem; font-weight:700; letter-spacing:.2px}
   header p{margin:.3rem 0 0; color:var(--muted); font-size:.95rem}
 
-  .wrap{max-width:1100px; margin:0 auto; padding:16px 20px 64px}
-  .grid{display:grid; grid-template-columns: 1.2fr .8fr; gap:16px}
-  @media (max-width: 980px){ .grid{grid-template-columns:1fr; } }
-
+  .wrap{max-width:1180px; margin:0 auto; padding:8px 18px 70px}
   .card{
     background:rgba(9,14,28,.6); backdrop-filter: blur(10px);
     border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow);
+    margin-top:16px;
   }
   .card h2{font-size:1rem; font-weight:700; margin:0; padding:16px 16px 0}
   .card .body{padding:16px}
+
+  .grid-2{display:grid; grid-template-columns:1.1fr .9fr; gap:16px}
+  @media (max-width: 980px){ .grid-2{grid-template-columns:1fr;} }
 
   .drop{
     border:2px dashed #2a3b61; border-radius:12px; padding:18px; text-align:center; color:var(--muted);
@@ -41,18 +42,24 @@
   .thumbs{display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:12px; margin-top:12px}
   .thumb{
     border:1px solid var(--border); border-radius:10px; overflow:hidden; background:#0e1425;
-    aspect-ratio: 4/5; display:flex; align-items:center; justify-content:center;
+    aspect-ratio: 4/5; display:flex; align-items:center; justify-content:center; position:relative;
   }
   .thumb img{width:100%; height:100%; object-fit:cover}
+  .thumb .label{
+    position:absolute; left:0; right:0; bottom:0; background:linear-gradient(180deg,rgba(0,0,0,0) 0,rgba(0,0,0,.55) 85%);
+    color:#fff; font-size:.78rem; padding:6px 8px; text-shadow:0 1px 2px rgba(0,0,0,.5);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
 
-  .controls{display:grid; grid-template-columns:repeat(2,1fr); gap:10px}
+  .row{display:flex; gap:10px; flex-wrap:wrap}
+  .controls{display:grid; grid-template-columns:repeat(2,1fr); gap:12px}
   .controls .row{display:flex; gap:10px}
   .controls label{display:block; font-size:.85rem; color:var(--muted); margin-bottom:6px}
   .controls input[type="number"], .controls input[type="text"], .controls select, .controls input[type="color"]{
     width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:#0d1528; color:var(--ink);
   }
-  .controls .help{font-size:.8rem; color:var(--muted); margin-top:4px}
-
+  .controls input[type="checkbox"]{transform: translateY(1px)}
+  .help{font-size:.8rem; color:var(--muted); margin-top:4px}
   .btns{display:flex; flex-wrap:wrap; gap:10px; margin-top:12px}
   button,.btn{
     appearance:none; border:1px solid #254060; background:#102036; color:#dce7f5;
@@ -60,175 +67,292 @@
   }
   button.primary{background:var(--accent); border-color:#0ea5e9; color:#00121a}
   button:disabled{opacity:.6; cursor:not-allowed}
+  .small{font-size:.85rem; color:var(--muted)}
+
+  .bg-list{display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px}
+  .bg-card{border:1px solid var(--border); border-radius:10px; overflow:hidden; background:#0e1425}
+  .bg-card label{display:block; padding:8px 10px; border-top:1px solid var(--border); font-size:.85rem; color:var(--muted)}
+  .bg-card img{display:block; width:100%; height:100px; object-fit:cover}
 
   #output{padding:16px; display:grid; gap:16px}
   canvas{width:100%; height:auto; image-rendering:crisp-edges; background:#fff; border-radius:8px}
-  .dl{display:flex; gap:10px; flex-wrap:wrap}
-  .small{font-size:.85rem; color:var(--muted)}
 </style>
 </head>
 <body>
 <header>
   <h1>Automated Composite Builder</h1>
-  <p>Tiles forced to <strong>4×5</strong>. Composite size <strong>10×8 in</strong> (default), rendered at <strong>300 DPI</strong> = 3000×2400 px.</p>
+  <p>Tiles forced to <strong>4×5</strong>. Composite sizes include <strong>10×8 in</strong> @ <strong>300 DPI</strong> (3000×2400 px). Uploads at top → configure → generate at bottom.</p>
 </header>
 
 <div class="wrap">
-  <div class="grid">
 
-    <!-- Left: input & thumbs -->
-    <section class="card">
-      <h2>Upload Images</h2>
-      <div class="body">
+  <!-- ========== UPLOADS (TOP) ========== -->
+  <section class="card" id="uploads">
+    <h2>1) Uploads</h2>
+    <div class="body grid-2">
+      <div>
         <div id="drop" class="drop">
-          <strong>Drag & drop</strong> headshots here or
+          <strong>Drag & drop photos</strong> here or
           <label for="filePick" class="btn">Browse</label>
           <input id="filePick" type="file" accept="image/*" multiple>
-          <div class="small" style="margin-top:8px">Tip: Upload portraits. Cropping will center-crop to 4:5.</div>
+          <div class="small" style="margin-top:8px">Portraits recommended. Cropping will center-crop to 4:5.</div>
         </div>
         <div id="thumbs" class="thumbs" aria-live="polite"></div>
       </div>
-    </section>
 
-    <!-- Right: settings -->
-    <section class="card">
-      <h2>Layout & Export</h2>
-      <div class="body">
-        <div class="controls">
-          <div>
-            <label>Preset Size</label>
-            <select id="preset">
-              <option value="3000x2400">10×8 in @ 300 DPI (3000×2400)</option>
-              <option value="2400x3000">8×10 in @ 300 DPI (2400×3000)</option>
-              <option value="4500x3600">15×12 in @ 300 DPI (4500×3600)</option>
-              <option value="6000x4800">20×16 in @ 300 DPI (6000×4800)</option>
-            </select>
-          </div>
-          <div class="row">
-            <div>
-              <label>Canvas W (px)</label>
-              <input id="cw" type="number" value="3000" min="800">
+      <div>
+        <div class="row" style="gap:12px; flex-direction:column">
+          <!-- CSV Names -->
+          <div class="drop" id="csvDrop">
+            <div class="row" style="justify-content:space-between; align-items:center">
+              <div><strong>CSV with names</strong> (optional)</div>
+              <label for="csvPick" class="btn">Browse CSV</label>
             </div>
-            <div>
-              <label>Canvas H (px)</label>
-              <input id="ch" type="number" value="2400" min="800">
+            <input id="csvPick" type="file" accept=".csv,text/csv">
+            <div class="small" style="margin-top:6px">
+              Headers accepted: <code>name</code> OR <code>first,last</code>. Optional <code>filename</code> to match a photo.<br>
+              Example: <code>first,last,filename</code>
             </div>
-          </div>
-
-          <div class="row">
-            <div>
-              <label>Columns <span class="small">(leave 0 for Auto)</span></label>
-              <input id="cols" type="number" value="0" min="0" step="1">
-              <div class="help">Auto maximizes tile size while fitting all rows.</div>
-            </div>
-            <div>
-              <label>Margin (px)</label>
-              <input id="margin" type="number" value="80" min="0">
+            <div class="row" style="gap:10px; margin-top:10px">
+              <label class="small">Sort by
+                <select id="sortBy">
+                  <option value="original">Original order</option>
+                  <option value="first">First Name</option>
+                  <option value="last">Last Name</option>
+                  <option value="name">Full Name</option>
+                  <option value="file">File Name</option>
+                </select>
+              </label>
+              <label class="small">Direction
+                <select id="sortDir">
+                  <option value="asc">A → Z</option>
+                  <option value="desc">Z → A</option>
+                </select>
+              </label>
+              <button id="applySort" class="btn">Apply Sort</button>
             </div>
           </div>
 
-          <div class="row">
-            <div>
-              <label>Gutter (px)</label>
-              <input id="gutter" type="number" value="24" min="0">
+          <!-- School Logo -->
+          <div class="drop" id="logoDrop">
+            <div class="row" style="justify-content:space-between; align-items:center">
+              <div><strong>School Logo</strong> (optional)</div>
+              <label for="logoPick" class="btn">Upload Logo</label>
             </div>
-            <div>
-              <label>Background</label>
-              <input id="bg" type="color" value="#ffffff" />
+            <input id="logoPick" type="file" accept="image/*">
+            <div class="small" style="margin-top:6px">PNG with transparency preferred.</div>
+            <div class="row" style="gap:10px; margin-top:10px">
+              <label class="small">Logo height (px)
+                <input id="logoSize" type="number" value="140" min="40" />
+              </label>
             </div>
           </div>
 
-          <div class="row">
-            <div>
-              <label>Title (optional)</label>
-              <input id="title" type="text" placeholder="e.g., Lincoln Elementary • Grade 3 • 2025–26">
+          <!-- Backgrounds 1–10 -->
+          <div class="drop" id="bgDrop">
+            <div class="row" style="justify-content:space-between; align-items:center">
+              <div><strong>Backgrounds</strong> (up to 10)</div>
+              <label for="bgPick" class="btn">Upload Backgrounds</label>
             </div>
-            <div>
-              <label>Title Size (px)</label>
-              <input id="titleSize" type="number" value="72" min="20" step="2">
-            </div>
+            <input id="bgPick" type="file" accept="image/*" multiple>
+            <div class="small" style="margin-top:6px">They’ll be titled <em>Background 1…10</em>. Pick one below.</div>
+            <div id="bgList" class="bg-list" style="margin-top:10px"></div>
           </div>
-        </div>
-
-        <div class="btns">
-          <button id="btnGen" class="primary" disabled>Generate Composite</button>
-          <button id="btnClear">Clear</button>
-        </div>
-        <div class="small" style="margin-top:8px">
-          Output is exact pixel size. For 10×8″ prints at 300 DPI, use 3000×2400 px.
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-  </div>
+  <!-- ========== SETTINGS (MIDDLE) ========== -->
+  <section class="card">
+    <h2>2) Settings</h2>
+    <div class="body controls">
+      <div>
+        <label>Preset Size</label>
+        <select id="preset">
+          <option value="3000x2400">10×8 in @ 300 DPI (3000×2400)</option>
+          <option value="2400x3000">8×10 in @ 300 DPI (2400×3000)</option>
+          <option value="4500x3600">15×12 in @ 300 DPI (4500×3600)</option>
+          <option value="6000x4800">20×16 in @ 300 DPI (6000×4800)</option>
+        </select>
+      </div>
+      <div class="row">
+        <div style="flex:1">
+          <label>Canvas W (px)</label>
+          <input id="cw" type="number" value="3000" min="800">
+        </div>
+        <div style="flex:1">
+          <label>Canvas H (px)</label>
+          <input id="ch" type="number" value="2400" min="800">
+        </div>
+      </div>
 
-  <section class="card" style="margin-top:16px">
-    <h2>Output</h2>
+      <div class="row">
+        <div style="flex:1">
+          <label>Columns (0 = Auto)</label>
+          <input id="cols" type="number" value="0" min="0" step="1">
+        </div>
+        <div style="flex:1">
+          <label>Rows (0 = Auto)</label>
+          <input id="rows" type="number" value="0" min="0" step="1">
+        </div>
+      </div>
+
+      <div class="row">
+        <div style="flex:1">
+          <label>Margin (px)</label>
+          <input id="margin" type="number" value="80" min="0">
+        </div>
+        <div style="flex:1">
+          <label>Gutter (px)</label>
+          <input id="gutter" type="number" value="24" min="0">
+        </div>
+      </div>
+
+      <div class="row">
+        <div style="flex:1">
+          <label>Background color (fallback)</label>
+          <input id="bgColor" type="color" value="#ffffff" />
+        </div>
+        <div style="flex:1">
+          <label>Show names under photos
+            <select id="showNames">
+              <option value="auto">Auto (on if CSV)</option>
+              <option value="on">On</option>
+              <option value="off" selected>Off</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="row">
+        <div style="flex:1">
+          <label>Name font size (px)</label>
+          <input id="nameSize" type="number" value="36" min="14" step="2">
+          <div class="help">Used when names are shown.</div>
+        </div>
+        <div style="flex:1">
+          <label>Header font size (px)</label>
+          <input id="titleSize" type="number" value="72" min="20" step="2">
+        </div>
+      </div>
+
+      <div class="row">
+        <div style="flex:1">
+          <label>School</label>
+          <input id="school" type="text" placeholder="e.g., Lincoln Elementary">
+        </div>
+        <div style="flex:.6">
+          <label>Grade</label>
+          <input id="grade" type="text" placeholder="e.g., 3">
+        </div>
+        <div style="flex:.6">
+          <label>Year</label>
+          <input id="year" type="text" placeholder="e.g., 2025–26">
+        </div>
+      </div>
+
+      <div class="row" style="grid-column:1 / -1; justify-content:flex-start">
+        <button id="btnGen" class="primary" disabled>Generate Composite</button>
+        <button id="btnClear">Clear</button>
+        <div class="small" style="align-self:center">Exact pixels → perfect print DPI.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== OUTPUT & EXPORT (BOTTOM) ========== -->
+  <section class="card">
+    <h2>3) Output & Export</h2>
     <div class="body">
       <div id="output"></div>
-      <div class="btns dl" id="downloads"></div>
+      <div class="btns" id="downloads"></div>
     </div>
   </section>
 </div>
 
 <script>
 (() => {
+  // ------ Elements
   const drop = document.getElementById('drop');
   const filePick = document.getElementById('filePick');
   const thumbs = document.getElementById('thumbs');
-  const btnGen = document.getElementById('btnGen');
-  const btnClear = document.getElementById('btnClear');
-  const output = document.getElementById('output');
-  const downloads = document.getElementById('downloads');
+
+  const csvPick = document.getElementById('csvPick');
+  const csvDrop = document.getElementById('csvDrop');
+  const sortBy = document.getElementById('sortBy');
+  const sortDir = document.getElementById('sortDir');
+  const applySort = document.getElementById('applySort');
+
+  const logoPick = document.getElementById('logoPick');
+  const logoDrop = document.getElementById('logoDrop');
+  const logoSizeEl = document.getElementById('logoSize');
+
+  const bgPick = document.getElementById('bgPick');
+  const bgDrop = document.getElementById('bgDrop');
+  const bgList = document.getElementById('bgList');
 
   const preset = document.getElementById('preset');
   const cw = document.getElementById('cw');
   const ch = document.getElementById('ch');
   const colsEl = document.getElementById('cols');
+  const rowsEl = document.getElementById('rows');
   const marginEl = document.getElementById('margin');
   const gutterEl = document.getElementById('gutter');
-  const bgEl = document.getElementById('bg');
-  const titleEl = document.getElementById('title');
+  const bgColorEl = document.getElementById('bgColor');
+  const showNamesEl = document.getElementById('showNames');
+  const nameSizeEl = document.getElementById('nameSize');
   const titleSizeEl = document.getElementById('titleSize');
+  const schoolEl = document.getElementById('school');
+  const gradeEl = document.getElementById('grade');
+  const yearEl = document.getElementById('year');
 
-  let images = []; // {img:HTMLImageElement, w, h, url}
+  const btnGen = document.getElementById('btnGen');
+  const btnClear = document.getElementById('btnClear');
+  const output = document.getElementById('output');
+  const downloads = document.getElementById('downloads');
 
-  function setPreset() {
-    const [w,h] = preset.value.split('x').map(n=>parseInt(n,10));
-    cw.value = w; ch.value = h;
-  }
+  // ------ State
+  let images = [];      // [{img, url, w, h, fileName, name?, first?, last?}]
+  let namesCSV = [];    // [{first?, last?, name, filename?}]
+  let logo = null;      // {img, w, h}
+  let backgrounds = []; // [{img, w, h, label}]  (max 10)
+  let bgIndex = -1;     // selected background index
+
+  // ------ Helpers (DOM)
+  const noop = () => {};
+  function setPreset(){ const [w,h]=preset.value.split('x').map(n=>parseInt(n,10)); cw.value=w; ch.value=h; }
   preset.addEventListener('change', setPreset);
 
-  // Drag & drop
-  ['dragenter','dragover'].forEach(ev=>{
-    drop.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); drop.classList.add('drag'); });
-  });
-  ;['dragleave','drop'].forEach(ev=>{
-    drop.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); drop.classList.remove('drag'); });
-  });
-  drop.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
-  drop.addEventListener('click', () => filePick.click());
-  filePick.addEventListener('change', e => handleFiles(e.target.files));
+  // Common DnD visual
+  function addDragVisual(el){
+    ['dragenter','dragover'].forEach(ev=> el.addEventListener(ev, e=>{ e.preventDefault(); e.stopPropagation(); el.classList.add('drag'); }));
+    ['dragleave','drop'].forEach(ev=> el.addEventListener(ev, e=>{ e.preventDefault(); e.stopPropagation(); el.classList.remove('drag'); }));
+  }
+  addDragVisual(drop);
+  addDragVisual(csvDrop);
+  addDragVisual(logoDrop);
+  addDragVisual(bgDrop);
 
-  function handleFiles(fileList){
+  // ------ Photo uploads
+  drop.addEventListener('drop', e => handlePhotoFiles(e.dataTransfer.files));
+  drop.addEventListener('click', () => filePick.click());
+  filePick.addEventListener('change', e => handlePhotoFiles(e.target.files));
+
+  async function handlePhotoFiles(fileList){
     const files = Array.from(fileList).filter(f => f.type.startsWith('image/'));
     if(!files.length) return;
-    Promise.all(files.map(loadImage))
-      .then(loaded => {
-        images.push(...loaded);
-        refreshThumbs();
-        btnGen.disabled = images.length === 0;
-      })
-      .catch(console.error);
+    const loaded = await Promise.all(files.map(loadImageFile));
+    images.push(...loaded);
+    mapNamesToImages(); // in case CSV already loaded
+    refreshThumbs();
+    btnGen.disabled = images.length === 0;
   }
 
-  function loadImage(file){
+  function loadImageFile(file){
     return new Promise((resolve,reject)=>{
       const url = URL.createObjectURL(file);
       const img = new Image();
-      // Let browser respect EXIF orientation if supported:
-      if ('decode' in img) { /* modern browsers */ }
-      img.onload = () => resolve({img, w: img.naturalWidth, h: img.naturalHeight, url});
+      img.onload = () => resolve({img, url, w:img.naturalWidth, h:img.naturalHeight, fileName: (file.name||'').toLowerCase()});
       img.onerror = reject;
       img.src = url;
     });
@@ -237,96 +361,291 @@
   function refreshThumbs(){
     thumbs.innerHTML = '';
     images.forEach((o,i)=>{
-      const d = document.createElement('div');
-      d.className = 'thumb';
-      const im = document.createElement('img');
-      im.src = o.url;
-      d.title = `Image ${i+1}`;
-      d.appendChild(im);
+      const d = document.createElement('div'); d.className='thumb';
+      const im = document.createElement('img'); im.src = o.url; d.appendChild(im);
+      const label = document.createElement('div'); label.className='label';
+      label.textContent = o.name || o.fileName || `Image ${i+1}`;
+      d.appendChild(label);
       thumbs.appendChild(d);
     });
   }
 
+  // ------ CSV upload + sorting
+  csvDrop.addEventListener('drop', e => handleCSVFiles(e.dataTransfer.files));
+  csvPick.addEventListener('change', e => handleCSVFiles(e.target.files));
+  applySort.addEventListener('click', () => { sortImages(); refreshThumbs(); });
+
+  async function handleCSVFiles(fileList){
+    const file = Array.from(fileList).find(f=>/\.csv$/i.test(f.name));
+    if(!file) return;
+    const text = await file.text();
+    namesCSV = parseCSV(text);
+    mapNamesToImages();
+    sortImages(); // if user selected something already
+    refreshThumbs();
+    // If names exist and user left "Auto", turn names on
+    if (showNamesEl.value==='auto' && namesCSV.length) showNamesEl.value='on';
+  }
+
+  function parseCSV(text){
+    // Minimal CSV parser (handles quotes and commas)
+    const rows = [];
+    let i=0, s=text;
+    let cell='', row=[], inQuotes=false;
+    const pushCell=()=>{ row.push(cell); cell=''; };
+    const pushRow=()=>{ rows.push(row); row=[]; };
+    while(i<s.length){
+      const ch=s[i];
+      if(inQuotes){
+        if(ch==='"' && s[i+1]==='"'){ cell+='"'; i+=2; continue; }
+        if(ch==='"'){ inQuotes=false; i++; continue; }
+        cell+=ch; i++; continue;
+      } else {
+        if(ch===','){ pushCell(); i++; continue; }
+        if(ch==='\n' || ch==='\r'){
+          // handle CRLF
+          if(ch==='\r' && s[i+1]==='\n') i++;
+          pushCell(); pushRow(); i++; continue;
+        }
+        if(ch==='"'){ inQuotes=true; i++; continue; }
+        cell+=ch; i++; continue;
+      }
+    }
+    pushCell(); pushRow();
+    if(!rows.length) return [];
+    const headers = rows[0].map(h=>h.trim().toLowerCase());
+    const data = rows.slice(1).filter(r=>r.some(c=>c.trim()!==''));
+    return data.map(r=>{
+      const obj={};
+      headers.forEach((h,idx)=>{ obj[h]= (r[idx]||'').trim(); });
+      // Normalize
+      const first = obj['first name']??obj['first'];
+      const last = obj['last name']??obj['last'];
+      const name = obj['name'] || [first,last].filter(Boolean).join(' ').trim();
+      const filename = (obj['filename']||obj['image']||'').toLowerCase();
+      return {first:first||'', last:last||'', name:name||'', filename};
+    });
+  }
+
+  function mapNamesToImages(){
+    if(!namesCSV.length) return;
+    // Map by filename if we can
+    const byFile = new Map();
+    namesCSV.forEach(n=>{ if(n.filename) byFile.set(n.filename, n); });
+    images.forEach(img=>{
+      const byExact = byFile.get(img.fileName);
+      if(byExact){ img.first=byExact.first; img.last=byExact.last; img.name=byExact.name || `${byExact.first} ${byExact.last}`.trim(); }
+    });
+    // Fill remaining in sequence
+    let seq = namesCSV.filter(n=>!n.filename);
+    let idx=0;
+    images.forEach(img=>{
+      if(!img.name && idx<seq.length){
+        const n = seq[idx++]; img.first=n.first; img.last=n.last; img.name=n.name || `${n.first} ${n.last}`.trim();
+      }
+    });
+  }
+
+  function sortImages(){
+    const key = sortBy.value;
+    const dir = sortDir.value==='desc' ? -1 : 1;
+    const collator = new Intl.Collator(undefined,{numeric:true,sensitivity:'base'});
+    if(key==='original') return; // keep as loaded
+    const get = (o)=>{
+      if(key==='first') return o.first||'';
+      if(key==='last')  return o.last||'';
+      if(key==='name')  return (o.name||'').trim();
+      if(key==='file')  return o.fileName||'';
+      return '';
+    };
+    images.sort((a,b)=> collator.compare(get(a), get(b)) * dir);
+  }
+
+  // ------ Logo upload
+  logoDrop.addEventListener('drop', e => handleLogoFile(e.dataTransfer.files));
+  logoPick.addEventListener('change', e => handleLogoFile(e.target.files));
+  async function handleLogoFile(fileList){
+    const file = Array.from(fileList).find(f => f.type.startsWith('image/'));
+    if(!file) return;
+    const img = await loadBlobAsImage(file);
+    logo = img; // {img,w,h}
+  }
+  function loadBlobAsImage(file){
+    return new Promise((resolve,reject)=>{
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => resolve({img, w:img.naturalWidth, h:img.naturalHeight, url});
+      img.onerror = reject;
+      img.src = url;
+    });
+  }
+
+  // ------ Background uploads (1–10)
+  bgPick.addEventListener('change', e => handleBgFiles(e.target.files));
+  bgDrop.addEventListener('drop', e => handleBgFiles(e.dataTransfer.files));
+  async function handleBgFiles(fileList){
+    const files = Array.from(fileList).filter(f => f.type.startsWith('image/')).slice(0, 10 - backgrounds.length);
+    if(!files.length) return;
+    const loaded = await Promise.all(files.map(loadBlobAsImage));
+    loaded.forEach((o,i)=>{ o.label = `Background ${backgrounds.length + i + 1}`; });
+    backgrounds.push(...loaded);
+    renderBgList();
+  }
+
+  function renderBgList(){
+    bgList.innerHTML = '';
+    backgrounds.forEach((b, i)=>{
+      const card = document.createElement('div'); card.className = 'bg-card';
+      const img = document.createElement('img'); img.src=b.img.src; card.appendChild(img);
+      const lab = document.createElement('label');
+      const id = `bg_${i}`;
+      lab.htmlFor = id; lab.textContent = `${b.label}`;
+      const radio = document.createElement('input'); radio.type='radio'; radio.name='bgPickRadio'; radio.id=id;
+      radio.style.margin='0 8px 0 0';
+      radio.checked = i===bgIndex;
+      radio.addEventListener('change', ()=>{ bgIndex = i; });
+      const wrapper = document.createElement('div'); wrapper.style.display='flex'; wrapper.style.alignItems='center'; wrapper.style.padding='8px 10px'; wrapper.style.borderTop='1px solid var(--border)';
+      wrapper.appendChild(radio); wrapper.appendChild(document.createTextNode(b.label));
+      card.appendChild(wrapper);
+      bgList.appendChild(card);
+    });
+  }
+
+  // ------ Generate / Clear
+  btnGen.addEventListener('click', onGenerate);
   btnClear.addEventListener('click', ()=>{
-    images.forEach(o=>URL.revokeObjectURL(o.url));
-    images = [];
-    thumbs.innerHTML = '';
-    output.innerHTML = '';
-    downloads.innerHTML = '';
+    images.forEach(o=> o.url && URL.revokeObjectURL(o.url));
+    images = []; namesCSV = []; logo = null; backgrounds = []; bgIndex = -1;
+    thumbs.innerHTML=''; bgList.innerHTML=''; output.innerHTML=''; downloads.innerHTML='';
     btnGen.disabled = true;
+    showNamesEl.value='off';
   });
 
-  // Core layout
-  btnGen.addEventListener('click', ()=>{
+  // Enable generate if images present
+  const enableGen = () => { btnGen.disabled = images.length === 0; };
+  document.addEventListener('change', enableGen);
+
+  // ------ Core generation
+  function onGenerate(){
     output.innerHTML = '';
     downloads.innerHTML = '';
+
     const W = Math.max(1, parseInt(cw.value,10));
     const H = Math.max(1, parseInt(ch.value,10));
     const M = Math.max(0, parseInt(marginEl.value,10));
     const G = Math.max(0, parseInt(gutterEl.value,10));
-    const bg = bgEl.value || '#ffffff';
+
     const wantedCols = Math.max(0, parseInt(colsEl.value,10));
-    const titleText = (titleEl.value||'').trim();
-    const titleSize = Math.max(10, parseInt(titleSizeEl.value,10));
+    const wantedRows = Math.max(0, parseInt(rowsEl.value,10));
 
-    // Reserve title area if present
-    const titlePad = titleText ? Math.ceil(titleSize * 1.6) : 0;
+    const bgColor = bgColorEl.value || '#ffffff';
 
-    // Compute content box
-    const contentX = M, contentY = M + titlePad;
+    const headerText = buildHeaderText();
+    const headerSize = Math.max(10, parseInt(titleSizeEl.value,10));
+    const nameSize = Math.max(12, parseInt(nameSizeEl.value,10));
+    const logoH = Math.max(20, parseInt(logoSizeEl.value,10));
+
+    const showNames = (()=>{
+      if(showNamesEl.value==='on') return true;
+      if(showNamesEl.value==='off') return false;
+      return namesCSV.length>0; // auto
+    })();
+
+    // Reserve header/title area
+    let headerPad = headerText ? Math.ceil(headerSize * 1.6) : 0;
+    // If logo present, make sure header pad accommodates it
+    if (logo) headerPad = Math.max(headerPad, Math.ceil(logoH + 20));
+
+    // Name label pad
+    const labelPad = showNames ? Math.ceil(nameSize * 1.35) : 0;
+
+    // Content box
+    const contentX = M, contentY = M + headerPad;
     const contentW = W - 2*M;
-    const contentH = H - 2*M - titlePad;
+    const contentH = H - 2*M - headerPad;
     if (contentW <= 0 || contentH <= 0) {
-      alert('Canvas too small for chosen margins/title. Reduce Margin or Title Size.');
+      alert('Canvas too small for chosen margins/header. Reduce Margin or Header Size.');
       return;
     }
 
-    // Pagination logic: pack images across multiple pages
-    const pages = paginateTiles(images.length, wantedCols, contentW, contentH, G);
+    // Pagination logic with optional manual rows/columns
+    const pages = paginateTiles(images.length, wantedCols, wantedRows, contentW, contentH, G, labelPad);
 
     if (pages.tilesPerPage === 0) {
-      alert('Settings produce zero tiles per page (try fewer columns, smaller margins, or larger canvas).');
+      alert('Settings produce zero tiles per page (try fewer rows/columns, smaller margins, or larger canvas).');
       return;
     }
 
     // Build canvases
     const pageCount = pages.pageCount;
-    const placements = pages.pagePlacements; // array of pages → array of {x,y,w,h,index}
+    const placements = pages.pagePlacements; // array of pages → array of {x,y,tileW,tileH,cellH,index}
 
     for(let p=0; p<pageCount; p++){
       const c = document.createElement('canvas');
       c.width = W; c.height = H;
       const ctx = c.getContext('2d');
 
-      // Background
-      ctx.save();
-      ctx.fillStyle = bg;
-      ctx.fillRect(0,0,W,H);
-      ctx.restore();
+      // Background color
+      ctx.fillStyle = bgColor; ctx.fillRect(0,0,W,H);
 
-      // Title
-      if (titleText){
+      // Background image (cover)
+      if (bgIndex>=0 && backgrounds[bgIndex]){
+        drawCover(ctx, backgrounds[bgIndex].img, 0,0,W,H);
+      }
+
+      // Header: logo + text
+      if (logo){
+        const scale = logoH / (logo.h||logo.img.naturalHeight||logo.img.height);
+        const w = (logo.w||logo.img.naturalWidth||logo.img.width) * scale;
+        const x = M; const y = M + (headerPad - logoH)/2;
+        ctx.drawImage(logo.img, x, y, w, logoH);
+      }
+      if (headerText){
+        const lum = approxLuminance(bgColor); // fallback only; BG image varies—use white with dark stroke
+        const fill = lum > 0.55 ? '#111' : '#fff';
         ctx.save();
-        ctx.fillStyle = '#000000';
-        // Auto-pick black/white based on bg luminance
-        const lum = luminanceFromHex(bg);
-        ctx.fillStyle = lum > 0.55 ? '#111111' : '#ffffff';
-        ctx.font = `700 ${titleSize}px Inter, Arial, sans-serif`;
+        ctx.font = `700 ${headerSize}px Inter, Arial, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
-        ctx.fillText(titleText, W/2, M);
+        // Stroke for contrast
+        ctx.lineWidth = Math.max(2, Math.ceil(headerSize/18));
+        ctx.strokeStyle = 'rgba(0,0,0,.6)';
+        ctx.strokeText(headerText, W/2, M + (headerPad - headerSize)/2);
+        ctx.fillStyle = fill;
+        ctx.fillText(headerText, W/2, M + (headerPad - headerSize)/2);
         ctx.restore();
       }
 
-      // Draw tiles
+      // Draw tiles (+ names)
       const cells = placements[p];
+      ctx.font = `600 ${nameSize}px Inter, Arial, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      const textStroke = Math.max(2, Math.ceil(nameSize/16));
+
       for (const cell of cells){
         const imgObj = images[cell.index];
         if(!imgObj) continue;
-        drawCropped4x5(ctx, imgObj.img, contentX + cell.x, contentY + cell.y, cell.w, cell.h);
+        const x = contentX + cell.x;
+        const y = contentY + cell.y;
+
+        // photo area: keep 4:5 inside the cell (cellH = tileH + labelPad)
+        drawCropped4x5(ctx, imgObj.img, x, y, cell.tileW, cell.tileH);
+
+        if (labelPad){
+          const name = imgObj.name || [imgObj.first, imgObj.last].filter(Boolean).join(' ').trim();
+          if (name){
+            const tx = x + cell.tileW/2;
+            const ty = y + cell.tileH + Math.max(4, Math.round(labelPad*0.18));
+            ctx.lineWidth = textStroke; ctx.strokeStyle='rgba(0,0,0,.55)';
+            ctx.strokeText(name, tx, ty);
+            ctx.fillStyle = '#ffffff'; // labels over photos or varied BG—white with stroke is safest
+            ctx.fillText(name, tx, ty);
+          }
+        }
       }
 
-      // Add to DOM + download link
+      // DOM & download
       output.appendChild(c);
       const a = document.createElement('a');
       a.className = 'btn';
@@ -335,110 +654,110 @@
       a.href = c.toDataURL('image/png');
       downloads.appendChild(a);
     }
-  });
+  }
 
-  // Helpers
+  function buildHeaderText(){
+    const school = (schoolEl.value||'').trim();
+    const grade  = (gradeEl.value||'').trim();
+    const year   = (yearEl.value||'').trim();
+    const bits = [];
+    if (school) bits.push(school);
+    if (grade)  bits.push(`Grade ${grade}`);
+    if (year)   bits.push(year);
+    return bits.join(' • ');
+  }
 
-  // Pack images into pages with a fixed 4:5 tile ratio, choosing columns if "auto".
-  function paginateTiles(count, wantedCols, contentW, contentH, G){
-    const tileRatio = 4/5; // width:height
-    // Choose columns
-    const chooseCols = () => {
-      if (wantedCols > 0) return wantedCols;
-      // Try 1..12 columns; pick the one that yields the largest tile area AND fits >=1 row
-      let best = 1, bestArea = 0;
-      for (let c=1; c<=12; c++){
-        const colW = (contentW - G*(c-1)) / c;
-        const colH = colW / tileRatio; // since w:h = 4:5, h = w / (4/5) = w*5/4
-        const rows = Math.floor((contentH + G) / (colH + G));
-        if (rows < 1) continue;
-        const perPage = c * rows;
-        const area = Math.min(perPage, count) * (colW*colH);
-        if (area > bestArea){ bestArea = area; best = c; }
+  // ------ Layout math
+  // Returns { pageCount, tilesPerPage, pagePlacements: [ [cells...] ] }
+  function paginateTiles(count, wantedCols, wantedRows, contentW, contentH, G, labelPad){
+    const ratio = 4/5; // width:height
+    const useAutoCols = wantedCols===0;
+    const useAutoRows = wantedRows===0;
+
+    function score(c, r){
+      // Tile width by width constraint
+      let tileW = (contentW - G*(c-1)) / c;
+      let tileH = tileW / ratio;
+      let cellH = tileH + labelPad;
+      // Reduce if height overflows requested rows
+      const neededH = r*cellH + (r-1)*G;
+      if (neededH > contentH){
+        const s = contentH / neededH;
+        tileW *= s; tileH *= s; cellH *= s;
       }
-      return best;
-    };
+      return {tileW, tileH, cellH, perPage: c*r};
+    }
 
-    const C = Math.max(1, chooseCols());
-    // Given columns, compute exact tile size to fit rows maximally
-    const colW_nominal = (contentW - G*(C-1)) / C;
-    let colW = colW_nominal;
-    let colH = colW / tileRatio;
-    let rows = Math.floor((contentH + G) / (colH + G));
-
-    if (rows < 1){
-      // If nothing fits, shrink width until at least one row fits
-      rows = 1;
-      colH = contentH - (rows-1)*G; // rows==1 ⇒ full height
-      colW = colH * tileRatio;
-      // And reduce columns if needed to fit width
-      let maxCols = Math.floor((contentW + G) / (colW + G));
-      if (maxCols < 1) maxCols = 1;
-      // Recompute with reduced columns
-      if (wantedCols === 0 && maxCols < C){
-        // try again with maxCols
-        colW = (contentW - G*(maxCols-1)) / maxCols;
-        colH = colW / tileRatio;
-        rows = Math.floor((contentH + G) / (colH + G));
-        // guard
-        if (rows < 1) rows = 1;
+    let best = null, bestC=1, bestR=1;
+    if (!useAutoCols && !useAutoRows){
+      bestC = Math.max(1, wantedCols);
+      bestR = Math.max(1, wantedRows);
+      best = score(bestC, bestR);
+    } else {
+      // Search small space: 1..16 cols, 1..20 rows
+      let Cmin = useAutoCols ? 1 : wantedCols, Cmax = useAutoCols ? 16 : wantedCols;
+      let Rmin = useAutoRows ? 1 : wantedRows, Rmax = useAutoRows ? 20 : wantedRows;
+      let bestArea = -1;
+      for (let C=Cmin; C<=Cmax; C++){
+        for (let R=Rmin; R<=Rmax; R++){
+          const s = score(C,R);
+          if (s.perPage<1) continue;
+          // Prefer bigger tiles; tie-break by perPage (higher) then by columns (lower)
+          const area = s.tileW*s.tileH;
+          const better = (area>bestArea) || (area===bestArea && s.perPage>(best?.perPage||0)) || (area===bestArea && s.perPage===(best?.perPage||0) && C<(bestC||1));
+          if (better){ bestArea=area; best=s; bestC=C; bestR=R; }
+        }
       }
     }
 
-    const perPage = Math.max(1, C * rows);
-
-    const pagePlacements = [];
+    if (!best || best.tileW<=0 || best.tileH<=0) return {pageCount:0, tilesPerPage:0, pagePlacements:[]};
+    const perPage = Math.max(1, best.perPage);
     const pageCount = Math.ceil(count / perPage);
+    const placements = [];
 
-    for (let p=0; p<pageCount; p++){
-      const start = p * perPage;
-      const end = Math.min(count, start + perPage);
+    for(let p=0; p<pageCount; p++){
+      const start = p*perPage;
+      const end = Math.min(count, start+perPage);
       const cells = [];
       for (let i=start; i<end; i++){
-        const k = i - start; // index within page
-        const r = Math.floor(k / C);
-        const c = k % C;
-        const x = c * (colW + G);
-        const y = r * (colH + G);
-        cells.push({x, y, w: colW, h: colH, index: i});
+        const k = i - start;
+        const r = Math.floor(k / bestC);
+        const c = k % bestC;
+        const x = c*(best.tileW + G);
+        const y = r*(best.cellH + G);
+        cells.push({x, y, tileW: best.tileW, tileH: best.tileH, cellH: best.cellH, index:i});
       }
-      pagePlacements.push(cells);
+      placements.push(cells);
     }
-
-    return { pageCount, tilesPerPage: perPage, pagePlacements };
+    return {pageCount, tilesPerPage: perPage, pagePlacements: placements};
   }
 
-  // Center-crop source image to 4:5 (width:height) then draw into dest rect
+  // ------ Drawing helpers
   function drawCropped4x5(ctx, img, dx, dy, dw, dh){
-    const targetRatio = 4/5;
+    const target = 4/5;
     const iw = img.naturalWidth || img.width;
     const ih = img.naturalHeight || img.height;
-    const r = iw / ih;
-
+    const r = iw/ih;
     let sx, sy, sw, sh;
-    if (r > targetRatio){
-      // too wide → crop width
-      sh = ih;
-      sw = ih * targetRatio;
-      sx = (iw - sw) / 2;
-      sy = 0;
-    } else {
-      // too tall → crop height
-      sw = iw;
-      sh = iw / targetRatio;
-      sx = 0;
-      sy = (ih - sh) / 2;
-    }
-    ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+    if (r > target){ sh = ih; sw = ih*target; sx=(iw-sw)/2; sy=0; }
+    else { sw = iw; sh = iw/target; sx=0; sy=(ih-sh)/2; }
+    ctx.drawImage(img, sx,sy,sw,sh, dx,dy,dw,dh);
   }
 
-  function luminanceFromHex(hex){
-    // hex like #rrggbb
-    const c = hex.replace('#','');
+  function drawCover(ctx, img, x,y,w,h){
+    const iw = img.naturalWidth || img.width;
+    const ih = img.naturalHeight || img.height;
+    const scale = Math.max(w/iw, h/ih);
+    const dw = iw*scale, dh = ih*scale;
+    const dx = x + (w-dw)/2, dy = y + (h-dh)/2;
+    ctx.drawImage(img, dx,dy,dw,dh);
+  }
+
+  function approxLuminance(hex){
+    const c = (hex||'#ffffff').replace('#','');
     const r = parseInt(c.slice(0,2),16)/255;
     const g = parseInt(c.slice(2,4),16)/255;
     const b = parseInt(c.slice(4,6),16)/255;
-    // sRGB → approx rel. luminance
     const lin = (u)=> (u<=0.03928? u/12.92 : Math.pow((u+0.055)/1.055,2.4));
     return 0.2126*lin(r) + 0.7152*lin(g) + 0.0722*lin(b);
   }
