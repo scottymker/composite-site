@@ -165,7 +165,7 @@
               <input id="csvPick" type="file" accept=".csv,text/csv">
               <span class="small" id="csvStatus" style="margin-left:8px">No CSV loaded.</span>
             </div>
-            <div class="small" style="margin-top:6px">Headers accepted: <code>first,last</code> (or <code>name</code>), optional <code>filename</code>, <code>grade</code>, <code>teacher</code>.</div>
+            <div class="small" style="margin-top:6px">Headers accepted: <code>first,last</code> (or <code>name</code>), optional <code>filename</code>/<code>imagename</code>, <code>grade</code>, <code>teacher</code>.</div>
           </div>
 
           <div><label>Show names
@@ -211,6 +211,12 @@
             <select id="sort3Dir"><option value="asc">A→Z</option><option value="desc">Z→A</option></select></label></div>
 
           <div style="grid-column:1/-1"><button id="applySort" class="btn">Apply Sort</button></div>
+
+          <!-- New: easy presets -->
+          <div class="row" style="grid-column:1/-1; gap:8px; margin-top:6px">
+            <button id="presetSortCsv" class="btn">Preset: CSV (Grade → Last → First)</button>
+            <button id="presetSortCsvOrder" class="btn">Preset: Use CSV Row Order</button>
+          </div>
         </div>
       </div>
 
@@ -290,7 +296,7 @@
   function setPreset(){ const [w,h]=preset.value.split('x').map(n=>parseInt(n,10)); cw.value=w; ch.value=h; }
   preset.addEventListener('change', setPreset);
 
-  // ----- Dropzone (browse fixed; no double-trigger)
+  // ----- Dropzone
   ['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); e.stopPropagation(); drop.classList.add('drag'); }));
   ['dragleave','drop'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); e.stopPropagation(); drop.classList.remove('drag'); }));
   drop.addEventListener('drop', e => handlePhotoFiles(e.dataTransfer.files));
@@ -317,7 +323,7 @@
     });
   }
 
-  // ----- Thumbs (with drag-to-reorder)
+  // ----- Thumbnails (drag to reorder)
   function refreshThumbs(){
     thumbs.innerHTML = '';
     images.forEach((o,i)=>{
@@ -361,10 +367,22 @@
     csvPick.value=''; // allow re-selecting same file
   });
 
-  // Apply sort now + also when user clicks
   const sortEls = [sort1Key, sort1Dir, sort2Key, sort2Dir, sort3Key, sort3Dir];
   sortEls.forEach(el => el.addEventListener('change', ()=>{ sortImages(); refreshThumbs(); }));
   applySortBtn.addEventListener('click', ()=>{ sortImages(); refreshThumbs(); });
+
+  // Preset buttons
+  document.getElementById('presetSortCsv')?.addEventListener('click', () => {
+    sort1Key.value = 'grade'; sort1Dir.value = 'asc';
+    sort2Key.value = 'last';  sort2Dir.value = 'asc';
+    sort3Key.value = 'first'; sort3Dir.value = 'asc';
+    sortImages(); refreshThumbs();
+  });
+  document.getElementById('presetSortCsvOrder')?.addEventListener('click', () => {
+    images.sort((a,b) => (a._csvIndex ?? Number.POSITIVE_INFINITY) - (b._csvIndex ?? Number.POSITIVE_INFINITY));
+    images.forEach((o,i)=>o._order=i);
+    refreshThumbs();
+  });
 
   function norm(s){ return (s??'').toString().trim(); }
   function stripBOM(s){ return s.replace(/^\uFEFF/,''); }
@@ -394,10 +412,12 @@
     const data = rows.slice(1).filter(r=>r.some(c=>norm(c)!==''));
 
     const idx = (aliases)=>{ for(const a of aliases){ const p=headers.indexOf(normKey(a)); if(p>-1) return p; } return -1; };
-    const iFirst = idx(['first','first_name','first name']);
-    const iLast  = idx(['last','last_name','last name','surname']);
+
+    // Expanded aliases (handles FirstName/LastName/ImageName exactly like your sheet)
+    const iFirst = idx(['first','first_name','first name','firstname','given','student_first_name','student firstname']);
+    const iLast  = idx(['last','last_name','last name','lastname','surname','family','family_name','family name']);
     const iName  = idx(['name','student','student_name','student name','full_name','full name']);
-    const iFile  = idx(['filename','file','photo','image','image_name','image name']);
+    const iFile  = idx(['filename','file','photo','image','image_name','image name','imagename']);
     const iGrade = idx(['grade','class','grade_level','grade level']);
     const iTeach = idx(['teacher','homeroom','advisor','instructor']);
 
@@ -411,7 +431,7 @@
         filename: iFile>-1 ? norm(r[iFile]).toLowerCase() : '',
         grade:    iGrade>-1? norm(r[iGrade]) : '',
         teacher:  iTeach>-1? norm(r[iTeach]) : '',
-        __row: rowIdx // preserve CSV row order for stable tie-breaking
+        __row: rowIdx // preserve CSV row order
       };
     });
   }
@@ -454,17 +474,16 @@
       }
     });
 
-    // 3) final safety: if still no name, derive from filename
+    // 3) final safety
     images.forEach(img=>{
       if(!img.name || !img.name.trim()) img.name = nameFromFile(img.fileName);
-      // if no CSV, mark csvIndex as +inf so CSV-backed rows win ties
       if(img._csv == null) img._csvIndex = Number.POSITIVE_INFINITY;
     });
 
     lastMatchCount=matched;
   }
 
-  function updateCsvStatus(justLoaded=false){
+  function updateCsvStatus(){
     if(!namesCSV.length){ csvStatus.textContent='No CSV loaded.'; return; }
     csvStatus.textContent = `CSV loaded: ${namesCSV.length} rows • matched ${lastMatchCount} of ${images.length} photos • Sorting uses CSV fields`;
   }
@@ -510,7 +529,7 @@
     return coll.compare(a||'', b||'');
   }
 
-  // Get value for sort from CSV first, then photo fields
+  // Prefer CSV values when sorting
   function getSortVal(img, key){
     const src = img._csv || img;
     if (key === 'grade')   return src.grade || img.grade || '';
@@ -543,9 +562,8 @@
         }
         if (cmp !== 0) return dir === 'desc' ? -cmp : cmp;
       }
-      // Prefer CSV row order when all keys tie, then manual drag order
-      if (a._csvIndex !== b._csvIndex) return a._csvIndex - b._csvIndex;
-      return a._order - b._order;
+      if (a._csvIndex !== b._csvIndex) return a._csvIndex - b._csvIndex; // CSV row order
+      return a._order - b._order; // then manual order
     });
   }
 
