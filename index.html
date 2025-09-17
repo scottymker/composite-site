@@ -13,45 +13,47 @@
     --radius:14px; --shadow:0 6px 18px rgba(0,0,0,.25);
   }
   *{box-sizing:border-box}
-  body{ margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,Helvetica,sans-serif;
-    background:linear-gradient(180deg,#0b1020 0%,#0c172f 100%); color:var(--ink); }
+  body{margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,Helvetica,sans-serif;
+    background:linear-gradient(180deg,#0b1020 0%,#0c172f 100%); color:var(--ink);}
   header{padding:22px 20px 10px; text-align:center}
-  header h1{margin:.2rem 0 0; font-size:1.35rem; font-weight:700; letter-spacing:.2px}
+  header h1{margin:.2rem 0 0; font-size:1.35rem; font-weight:700}
   header p{margin:.3rem 0 0; color:var(--muted); font-size:.95rem}
 
   .wrap{max-width:1180px; margin:0 auto; padding:8px 18px 70px}
-  .card{ background:rgba(9,14,28,.6); backdrop-filter: blur(10px);
-    border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); margin-top:16px; }
+  .card{background:rgba(9,14,28,.6); backdrop-filter:blur(10px); border:1px solid var(--border);
+    border-radius:var(--radius); box-shadow:var(--shadow); margin-top:16px;}
   .card h2{font-size:1rem; font-weight:700; margin:0; padding:16px 16px 0}
   .card .body{padding:16px}
-  .grid-2{display:grid; grid-template-columns:1.1fr .9fr; gap:16px}
-  @media (max-width:980px){ .grid-2{grid-template-columns:1fr} }
 
-  .drop{ border:2px dashed #2a3b61; border-radius:12px; padding:18px; text-align:center; color:var(--muted);
-    transition:.2s border-color,.2s background; }
+  .grid-2{display:grid; grid-template-columns:1.1fr .9fr; gap:16px}
+  @media (max-width:980px){ .grid-2{grid-template-columns:1fr}}
+
+  /* Uploads */
+  .drop{border:2px dashed #2a3b61; border-radius:12px; padding:18px; text-align:center; color:var(--muted);
+    transition:.2s border-color,.2s background;}
   .drop.drag{border-color:var(--accent); background:rgba(14,165,233,.08); color:var(--ink)}
   .drop input{display:none}
-
   .thumbs{display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:12px; margin-top:12px}
-  .thumb{ border:1px solid var(--border); border-radius:10px; overflow:hidden; background:#0e1425;
-    aspect-ratio:4/5; display:flex; align-items:center; justify-content:center; position:relative; }
+  .thumb{border:1px solid var(--border); border-radius:10px; overflow:hidden; background:#0e1425;
+    aspect-ratio:4/5; display:flex; align-items:center; justify-content:center; position:relative}
+  .thumb[draggable="true"]{cursor:grab}
+  .thumb.dragging{opacity:.5}
   .thumb img{width:100%; height:100%; object-fit:cover}
-  .thumb .label{ position:absolute; left:0; right:0; bottom:0;
-    background:linear-gradient(180deg,rgba(0,0,0,0) 0,rgba(0,0,0,.55) 85%);
-    color:#fff; font-size:.78rem; padding:6px 8px; text-shadow:0 1px 2px rgba(0,0,0,.5);
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .thumb .label{position:absolute; left:0; right:0; bottom:0; background:linear-gradient(180deg,rgba(0,0,0,0) 0,rgba(0,0,0,.55) 85%);
+    color:#fff; font-size:.78rem; padding:6px 8px; text-shadow:0 1px 2px rgba(0,0,0,.5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .thumb .idx{position:absolute; top:6px; left:6px; font-size:.72rem; background:rgba(0,0,0,.55); color:#fff; padding:2px 6px; border-radius:999px}
 
   .row{display:flex; gap:10px; flex-wrap:wrap}
   .controls{display:grid; grid-template-columns:repeat(2,1fr); gap:12px}
   .controls .row{display:flex; gap:10px}
   .controls label{display:block; font-size:.85rem; color:var(--muted); margin-bottom:6px}
   .controls input[type="number"], .controls input[type="text"], .controls select, .controls input[type="color"]{
-    width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:#0d1528; color:var(--ink);
-  }
-  .help{font-size:.8rem; color:var(--muted); margin-top:4px}
+    width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:#0d1528; color:var(--ink)}
+  .subhead{font-weight:700; margin:4px 0 8px; color:var(--ink)}
+  .fieldset{border:1px dashed var(--border); border-radius:12px; padding:12px; margin-top:8px}
+
   .btns{display:flex; flex-wrap:wrap; gap:10px; margin-top:12px}
-  button,.btn{ appearance:none; border:1px solid #254060; background:#102036; color:#dce7f5;
-    padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:600; }
+  button,.btn{appearance:none; border:1px solid #254060; background:#102036; color:#dce7f5; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:600}
   button.primary{background:var(--accent); border-color:#0ea5e9; color:#00121a}
   button:disabled{opacity:.6; cursor:not-allowed}
   .small{font-size:.85rem; color:var(--muted)}
@@ -69,176 +71,172 @@
 <body>
 <header>
   <h1>Automated Composite Builder</h1>
-  <p>Tiles forced to <strong>4×5</strong>. Composite sizes include <strong>10×8 in</strong> @ <strong>300 DPI</strong> (3000×2400 px). Uploads at top → configure → generate at bottom.</p>
+  <p>Tiles forced to <strong>4×5</strong>. Composite sizes include <strong>10×8 in</strong> @ <strong>300 DPI</strong> (3000×2400 px). Uploads → Settings → Generate.</p>
 </header>
 
 <div class="wrap">
 
-  <!-- UPLOADS -->
+  <!-- 1) UPLOADS -->
   <section class="card" id="uploads">
     <h2>1) Uploads</h2>
     <div class="body grid-2">
       <div>
-        <div id="drop" class="drop">
+        <div id="drop" class="drop" aria-label="Photo dropzone">
           <strong>Drag & drop photos</strong> here or
-          <label for="filePick" class="btn">Browse</label>
+          <label for="filePick" class="btn" role="button">Browse</label>
           <input id="filePick" type="file" accept="image/*" multiple>
-          <div class="small" style="margin-top:8px">Portraits recommended. Cropping will center-crop to 4:5.</div>
+          <div class="small" style="margin-top:8px">Tip: drag thumbnails to set the exact order you want on the composite.</div>
         </div>
         <div id="thumbs" class="thumbs" aria-live="polite"></div>
       </div>
 
       <div>
-        <div class="row" style="gap:12px; flex-direction:column">
-          <!-- CSV Names -->
-          <div class="drop" id="csvDrop">
-            <div class="row" style="justify-content:space-between; align-items:center">
-              <div><strong>CSV with names</strong> (optional)</div>
-              <label for="csvPick" class="btn">Browse CSV</label>
-            </div>
-            <input id="csvPick" type="file" accept=".csv,text/csv">
-            <div class="small" id="csvStatus" style="margin-top:6px">
-              Headers accepted: <code>name</code> or <code>first,last</code>. You can add a <code>filename</code> column to match images.
-            </div>
-            <div class="row" style="gap:10px; margin-top:10px">
-              <label class="small">Sort by
-                <select id="sortBy">
-                  <option value="original">Original order</option>
-                  <option value="first">First Name</option>
-                  <option value="last">Last Name</option>
-                  <option value="name">Full Name</option>
-                  <option value="file">File Name</option>
-                </select>
-              </label>
-              <label class="small">Direction
-                <select id="sortDir">
-                  <option value="asc">A → Z</option>
-                  <option value="desc">Z → A</option>
-                </select>
-              </label>
-              <button id="applySort" class="btn">Apply Sort</button>
-            </div>
-          </div>
-
-          <!-- School Logo -->
-          <div class="drop" id="logoDrop">
-            <div class="row" style="justify-content:space-between; align-items:center">
-              <div><strong>School Logo</strong> (optional)</div>
-              <label for="logoPick" class="btn">Upload Logo</label>
-            </div>
-            <input id="logoPick" type="file" accept="image/*">
-            <div class="small" style="margin-top:6px">PNG with transparency preferred.</div>
-            <div class="row" style="gap:10px; margin-top:10px">
-              <label class="small">Logo height (px)
-                <input id="logoSize" type="number" value="140" min="40" />
-              </label>
-            </div>
-          </div>
-
-          <!-- Backgrounds -->
-          <div class="drop" id="bgDrop">
-            <div class="row" style="justify-content:space-between; align-items:center">
-              <div><strong>Backgrounds</strong> (up to 10)</div>
+        <!-- Optional background images (keep here) -->
+        <div class="fieldset">
+          <div class="subhead">Backgrounds (optional)</div>
+          <div class="row" style="justify-content:space-between; align-items:center">
+            <div class="small">Upload up to 10. First one auto-selects.</div>
+            <div>
               <label for="bgPick" class="btn">Upload Backgrounds</label>
+              <input id="bgPick" type="file" accept="image/*" multiple>
             </div>
-            <input id="bgPick" type="file" accept="image/*" multiple>
-            <div class="small" style="margin-top:6px">They’ll be titled <em>Background 1…10</em>. The first one auto-selects.</div>
-            <div id="bgList" class="bg-list" style="margin-top:10px"></div>
           </div>
+          <div id="bgList" class="bg-list" style="margin-top:10px"></div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- SETTINGS -->
+  <!-- 2) SETTINGS -->
   <section class="card">
     <h2>2) Settings</h2>
-    <div class="body controls">
-      <div>
-        <label>Preset Size</label>
-        <select id="preset">
-          <option value="3000x2400">10×8 in @ 300 DPI (3000×2400)</option>
-          <option value="2400x3000">8×10 in @ 300 DPI (2400×3000)</option>
-          <option value="4500x3600">15×12 in @ 300 DPI (4500×3600)</option>
-          <option value="6000x4800">20×16 in @ 300 DPI (6000×4800)</option>
-        </select>
-      </div>
-      <div class="row">
-        <div style="flex:1">
-          <label>Canvas W (px)</label>
-          <input id="cw" type="number" value="3000" min="800">
-        </div>
-        <div style="flex:1">
-          <label>Canvas H (px)</label>
-          <input id="ch" type="number" value="2400" min="800">
+    <div class="body">
+
+      <!-- Title group -->
+      <div class="fieldset">
+        <div class="subhead">Title</div>
+        <div class="controls">
+          <div><label>School<input id="school" type="text" placeholder="e.g., Lincoln Elementary"></label></div>
+          <div><label>Grade<input id="grade" type="text" placeholder="e.g., 3"></label></div>
+          <div><label>Year<input id="year" type="text" placeholder="e.g., 2025–26"></label></div>
+          <div><label>Title font size (px)<input id="titleSize" type="number" value="72" min="20" step="2"></label></div>
+          <div>
+            <label>Logo (optional)
+              <div class="row" style="align-items:center; margin-top:6px">
+                <label for="logoPick" class="btn">Upload Logo</label>
+                <input id="logoPick" type="file" accept="image/*">
+                <span id="logoName" class="small" style="margin-left:8px">No file</span>
+              </div>
+            </label>
+          </div>
+          <div><label>Logo height (px)<input id="logoSize" type="number" value="140" min="40"></label></div>
         </div>
       </div>
 
-      <div class="row">
-        <div style="flex:1">
-          <label>Columns (0 = Auto)</label>
-          <input id="cols" type="number" value="0" min="0" step="1">
-        </div>
-        <div style="flex:1">
-          <label>Rows (0 = Auto)</label>
-          <input id="rows" type="number" value="0" min="0" step="1">
-        </div>
-      </div>
-
-      <div class="row">
-        <div style="flex:1">
-          <label>Margin (px)</label>
-          <input id="margin" type="number" value="80" min="0">
-        </div>
-        <div style="flex:1">
-          <label>Gutter (px)</label>
-          <input id="gutter" type="number" value="24" min="0">
-        </div>
-      </div>
-
-      <div class="row">
-        <div style="flex:1">
-          <label>Background color (fallback)</label>
-          <input id="bgColor" type="color" value="#ffffff" />
-        </div>
-        <div style="flex:1">
-          <label>Show names under photos
-            <select id="showNames">
-              <option value="auto" selected>Auto (on if CSV)</option>
-              <option value="on">On</option>
-              <option value="off">Off</option>
-            </select>
-          </label>
-        </div>
-      </div>
-
-      <div class="row">
-        <div style="flex:1">
-          <label>Name font size (px)</label>
-          <input id="nameSize" type="number" value="36" min="14" step="2">
-        </div>
-        <div style="flex:1">
-          <label>Header font size (px)</label>
-          <input id="titleSize" type="number" value="72" min="20" step="2">
+      <!-- Canvas group -->
+      <div class="fieldset">
+        <div class="subhead">Canvas</div>
+        <div class="controls">
+          <div>
+            <label>Preset Size
+              <select id="preset">
+                <option value="3000x2400">10×8 in @ 300 DPI (3000×2400)</option>
+                <option value="2400x3000">8×10 in @ 300 DPI (2400×3000)</option>
+                <option value="4500x3600">15×12 in @ 300 DPI (4500×3600)</option>
+                <option value="6000x4800">20×16 in @ 300 DPI (6000×4800)</option>
+              </select>
+            </label>
+          </div>
+          <div class="row">
+            <div style="flex:1"><label>Canvas W (px)<input id="cw" type="number" value="3000" min="800"></label></div>
+            <div style="flex:1"><label>Canvas H (px)<input id="ch" type="number" value="2400" min="800"></label></div>
+          </div>
+          <div class="row">
+            <div style="flex:1"><label>Columns (0 = Auto)<input id="cols" type="number" value="0" min="0" step="1"></label></div>
+            <div style="flex:1"><label>Rows (0 = Auto)<input id="rows" type="number" value="0" min="0" step="1"></label></div>
+          </div>
+          <div class="row">
+            <div style="flex:1"><label>Background color (fallback)<input id="bgColor" type="color" value="#ffffff"/></label></div>
+            <div style="flex:1"><label>Gutter (px)<input id="gutter" type="number" value="24" min="0"></label></div>
+          </div>
+          <div class="row">
+            <div style="flex:1"><label>Margins (px)<input id="margin" type="number" value="80" min="0"></label></div>
+            <div style="flex:1"><label>Show names under photos
+              <select id="showNames">
+                <option value="auto" selected>Auto (on if CSV)</option>
+                <option value="on">On</option>
+                <option value="off">Off</option>
+              </select></label>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="row">
-        <div style="flex:1">
-          <label>School</label>
-          <input id="school" type="text" placeholder="e.g., Lincoln Elementary">
-        </div>
-        <div style="flex:.6">
-          <label>Grade</label>
-          <input id="grade" type="text" placeholder="e.g., 3">
-        </div>
-        <div style="flex:.6">
-          <label>Year</label>
-          <input id="year" type="text" placeholder="e.g., 2025–26">
+      <!-- Image Names group -->
+      <div class="fieldset">
+        <div class="subhead">Image Names</div>
+        <div class="controls">
+          <div style="grid-column:1/-1">
+            <label>Upload CSV (names, optional)</label>
+            <div class="row" style="align-items:center; margin-top:6px">
+              <label for="csvPick" class="btn">Browse CSV</label>
+              <input id="csvPick" type="file" accept=".csv,text/csv">
+              <span class="small" id="csvStatus" style="margin-left:8px">No CSV loaded.</span>
+            </div>
+            <div class="small" style="margin-top:6px">Headers accepted: <code>first,last</code> (or <code>name</code>), optional <code>filename</code>, <code>grade</code>, <code>teacher</code>.</div>
+          </div>
+
+          <!-- 3-level sort -->
+          <div>
+            <label>Sort 1
+              <select id="sort1Key">
+                <option value="none">(none)</option>
+                <option value="grade">Grade</option>
+                <option value="teacher">Teacher</option>
+                <option value="last">Last name</option>
+                <option value="first">First name</option>
+              </select>
+            </label>
+          </div>
+          <div><label>Dir
+            <select id="sort1Dir"><option value="asc">A→Z</option><option value="desc">Z→A</option></select></label></div>
+
+          <div>
+            <label>Sort 2
+              <select id="sort2Key">
+                <option value="none">(none)</option>
+                <option value="grade">Grade</option>
+                <option value="teacher">Teacher</option>
+                <option value="last">Last name</option>
+                <option value="first">First name</option>
+              </select>
+            </label>
+          </div>
+          <div><label>Dir
+            <select id="sort2Dir"><option value="asc">A→Z</option><option value="desc">Z→A</option></select></label></div>
+
+          <div>
+            <label>Sort 3
+              <select id="sort3Key">
+                <option value="none">(none)</option>
+                <option value="grade">Grade</option>
+                <option value="teacher">Teacher</option>
+                <option value="last">Last name</option>
+                <option value="first">First name</option>
+              </select>
+            </label>
+          </div>
+          <div><label>Dir
+            <select id="sort3Dir"><option value="asc">A→Z</option><option value="desc">Z→A</option></select></label></div>
+
+          <div style="grid-column:1/-1">
+            <button id="applySort" class="btn">Apply Sort</button>
+            <div class="small" style="margin-top:6px">Tip: You can still drag thumbnails manually after sorting.</div>
+          </div>
         </div>
       </div>
 
-      <div class="row" style="grid-column:1 / -1; justify-content:flex-start">
+      <div class="btns">
         <button id="btnGen" class="primary" disabled>Generate Composite</button>
         <button id="btnClear">Clear</button>
         <div class="small" style="align-self:center">Exact pixels → perfect print DPI.</div>
@@ -246,7 +244,7 @@
     </div>
   </section>
 
-  <!-- OUTPUT -->
+  <!-- 3) OUTPUT -->
   <section class="card">
     <h2>3) Output & Export</h2>
     <div class="body">
@@ -258,25 +256,10 @@
 
 <script>
 (() => {
-  // Elements
+  // ----- Elements
   const drop = document.getElementById('drop');
   const filePick = document.getElementById('filePick');
   const thumbs = document.getElementById('thumbs');
-
-  const csvPick = document.getElementById('csvPick');
-  const csvDrop = document.getElementById('csvDrop');
-  const csvStatus = document.getElementById('csvStatus');
-  const sortBy = document.getElementById('sortBy');
-  const sortDir = document.getElementById('sortDir');
-  const applySort = document.getElementById('applySort');
-
-  const logoPick = document.getElementById('logoPick');
-  const logoDrop = document.getElementById('logoDrop');
-  const logoSizeEl = document.getElementById('logoSize');
-
-  const bgPick = document.getElementById('bgPick');
-  const bgDrop = document.getElementById('bgDrop');
-  const bgList = document.getElementById('bgList');
 
   const preset = document.getElementById('preset');
   const cw = document.getElementById('cw');
@@ -287,101 +270,120 @@
   const gutterEl = document.getElementById('gutter');
   const bgColorEl = document.getElementById('bgColor');
   const showNamesEl = document.getElementById('showNames');
-  const nameSizeEl = document.getElementById('nameSize');
+
   const titleSizeEl = document.getElementById('titleSize');
   const schoolEl = document.getElementById('school');
   const gradeEl = document.getElementById('grade');
   const yearEl = document.getElementById('year');
+  const logoPick = document.getElementById('logoPick');
+  const logoName = document.getElementById('logoName');
+  const logoSizeEl = document.getElementById('logoSize');
+
+  const csvPick = document.getElementById('csvPick');
+  const csvStatus = document.getElementById('csvStatus');
+  const sort1Key = document.getElementById('sort1Key');
+  const sort1Dir = document.getElementById('sort1Dir');
+  const sort2Key = document.getElementById('sort2Key');
+  const sort2Dir = document.getElementById('sort2Dir');
+  const sort3Key = document.getElementById('sort3Key');
+  const sort3Dir = document.getElementById('sort3Dir');
+  const applySort = document.getElementById('applySort');
+
+  const bgPick = document.getElementById('bgPick');
+  const bgList = document.getElementById('bgList');
 
   const btnGen = document.getElementById('btnGen');
   const btnClear = document.getElementById('btnClear');
   const output = document.getElementById('output');
   const downloads = document.getElementById('downloads');
 
-  // State
-  let images = [];      // [{img, url, w, h, fileName, name?, first?, last?}]
-  let namesCSV = [];    // [{first?, last?, name, filename?}]
-  let logo = null;      // {img, w, h}
-  let backgrounds = []; // [{img, w, h, label, url}]  (max 10)
-  let bgIndex = -1;     // selected background index
+  // ----- State
+  let images = [];      // [{img,url,w,h,fileName, first?,last?,name?,grade?,teacher?}]
+  let namesCSV = [];    // [{first,last,name,filename,grade,teacher}]
+  let logo = null;      // {img,w,h,url}
+  let backgrounds = []; // [{img,w,h,label,url}]
+  let bgIndex = -1;
   let lastMatchCount = 0;
 
-  // Preset
+  // ----- Preset
   function setPreset(){ const [w,h]=preset.value.split('x').map(n=>parseInt(n,10)); cw.value=w; ch.value=h; }
   preset.addEventListener('change', setPreset);
 
-  // Drag visuals
-  function addDragVisual(el){
-    ['dragenter','dragover'].forEach(ev=> el.addEventListener(ev, e=>{ e.preventDefault(); e.stopPropagation(); el.classList.add('drag'); }));
-    ['dragleave','drop'].forEach(ev=> el.addEventListener(ev, e=>{ e.preventDefault(); e.stopPropagation(); el.classList.remove('drag'); }));
-  }
-  [drop,csvDrop,logoDrop,bgDrop].forEach(addDragVisual);
-
-  // Photo uploads
+  // ----- Drag & drop visuals (no click-to-open: fixes double-select)
+  ['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); e.stopPropagation(); drop.classList.add('drag'); }));
+  ['dragleave','drop'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); e.stopPropagation(); drop.classList.remove('drag'); }));
   drop.addEventListener('drop', e => handlePhotoFiles(e.dataTransfer.files));
-  drop.addEventListener('click', () => filePick.click());
-  filePick.addEventListener('change', e => handlePhotoFiles(e.target.files));
+
+  // Browse button opens file input—no extra listeners on the dropzone
+  filePick.addEventListener('change', e => { handlePhotoFiles(e.target.files); filePick.value=''; }); // reset after
 
   async function handlePhotoFiles(fileList){
     const files = Array.from(fileList).filter(f => f.type.startsWith('image/'));
     if(!files.length) return;
     const loaded = await Promise.all(files.map(loadImageFile));
     images.push(...loaded);
-    mapNamesToImages(); // if CSV already loaded
+    mapNamesToImages();
     refreshThumbs();
     btnGen.disabled = images.length === 0;
     updateCsvStatus();
   }
-
   function loadImageFile(file){
     return new Promise((resolve,reject)=>{
       const url = URL.createObjectURL(file);
       const img = new Image();
-      img.onload = () => resolve({img, url, w:img.naturalWidth, h:img.naturalHeight, fileName: (file.name||'').toLowerCase()});
+      img.onload = () => resolve({img, url, w:img.naturalWidth, h:img.naturalHeight, fileName:(file.name||'').toLowerCase()});
       img.onerror = reject;
       img.src = url;
     });
   }
 
+  // ----- Thumbnails (drag to reorder)
   function refreshThumbs(){
     thumbs.innerHTML = '';
     images.forEach((o,i)=>{
-      const d = document.createElement('div'); d.className='thumb';
-      const im = document.createElement('img'); im.src = o.url; d.appendChild(im);
+      const d = document.createElement('div'); d.className='thumb'; d.setAttribute('draggable','true');
+      const im = document.createElement('img'); im.src=o.url; d.appendChild(im);
+      const idx = document.createElement('div'); idx.className='idx'; idx.textContent = i+1; d.appendChild(idx);
       const label = document.createElement('div'); label.className='label';
       label.textContent = (o.name && o.name.trim()) || o.fileName || `Image ${i+1}`;
       d.appendChild(label);
+
+      d.addEventListener('dragstart', ev => { d.classList.add('dragging'); ev.dataTransfer.setData('text/plain', String(i)); });
+      d.addEventListener('dragend', ()=> d.classList.remove('dragging'));
+      d.addEventListener('dragover', ev => ev.preventDefault());
+      d.addEventListener('drop', ev => {
+        ev.preventDefault();
+        const from = parseInt(ev.dataTransfer.getData('text/plain'),10);
+        const to = i;
+        if (!Number.isInteger(from) || from===to) return;
+        const moved = images.splice(from,1)[0];
+        images.splice(to,0,moved);
+        refreshThumbs();
+      });
+
       thumbs.appendChild(d);
     });
   }
 
-  // CSV upload + sorting
-  csvDrop.addEventListener('drop', e => handleCSVFiles(e.dataTransfer.files));
-  csvPick.addEventListener('change', e => handleCSVFiles(e.target.files));
-  applySort.addEventListener('click', () => { sortImages(); refreshThumbs(); });
-  sortBy.addEventListener('change', () => { sortImages(); refreshThumbs(); });
-  sortDir.addEventListener('change', () => { sortImages(); refreshThumbs(); });
-
-  async function handleCSVFiles(fileList){
-    const file = Array.from(fileList).find(f=>/\.csv$/i.test(f.name));
-    if(!file) return;
+  // ----- CSV + multi-level sort (grade/teacher/first/last)
+  csvPick.addEventListener('change', async (e)=>{
+    const file = e.target.files?.[0];
+    if(!file){ csvPick.value=''; return; }
     const text = await file.text();
     namesCSV = parseCSV(text);
     mapNamesToImages();
     sortImages();
     refreshThumbs();
-    // Auto-show names when CSV present (even if user hadn't set Auto)
     if (namesCSV.length && showNamesEl.value==='auto') showNamesEl.value='on';
     updateCsvStatus(true);
-  }
+    csvPick.value=''; // allow re-selecting same file later
+  });
+  applySort.addEventListener('click', ()=>{ sortImages(); refreshThumbs(); });
 
-  function norm(s){ return (s||'').toString().trim(); }
+  function norm(s){ return (s??'').toString().trim(); }
   function normKey(s){ return norm(s).toLowerCase().replace(/\s+/g,' ').replace(/\s/g,'_'); }
-
   function parseCSV(text){
-    // Basic CSV parser with quotes + CRLF
-    const rows = [];
-    let i=0, cell='', row=[], inQ=false;
+    const rows=[]; let i=0, cell='', row=[], inQ=false;
     const pushCell=()=>{ row.push(cell); cell=''; };
     const pushRow=()=>{ rows.push(row); row=[]; };
     while(i<text.length){
@@ -392,94 +394,106 @@
         cell+=ch; i++; continue;
       } else {
         if(ch===','){ pushCell(); i++; continue; }
-        if(ch==='\n' || ch==='\r'){ if(ch==='\r' && text[i+1]==='\n') i++; pushCell(); pushRow(); i++; continue; }
+        if(ch==='\n'||ch==='\r'){ if(ch==='\r'&&text[i+1]==='\n') i++; pushCell(); pushRow(); i++; continue; }
         if(ch==='"'){ inQ=true; i++; continue; }
         cell+=ch; i++; continue;
       }
     }
     pushCell(); pushRow();
     if(!rows.length) return [];
-    const headersRaw = rows[0].map(normKey);
+    const headers = rows[0].map(normKey);
     const data = rows.slice(1).filter(r=>r.some(c=>norm(c)!==''));
 
-    // Map common header variants
-    const idx = (aliases)=> {
-      for (const a of aliases){ const k=normKey(a); const p=headersRaw.indexOf(k); if(p>-1) return p; }
-      return -1;
-    };
+    const idx = (aliases)=>{ for(const a of aliases){ const p=headers.indexOf(normKey(a)); if(p>-1) return p; } return -1; };
     const iFirst = idx(['first','first_name','first name']);
     const iLast  = idx(['last','last_name','last name','surname']);
     const iName  = idx(['name','student','student_name','student name','full_name','full name']);
     const iFile  = idx(['filename','file','photo','image','image_name','image name']);
+    const iGrade = idx(['grade','class']);
+    const iTeach = idx(['teacher','homeroom','advisor']);
 
     return data.map(r=>{
       const first = iFirst>-1 ? norm(r[iFirst]) : '';
       const last  = iLast>-1  ? norm(r[iLast])  : '';
       let name    = iName>-1  ? norm(r[iName])  : '';
       if(!name) name = [first,last].filter(Boolean).join(' ');
-      const filename = iFile>-1 ? norm(r[iFile]).toLowerCase() : '';
-      return {first,last,name,filename};
+      return {
+        first,last,name,
+        filename: iFile>-1 ? norm(r[iFile]).toLowerCase() : '',
+        grade:    iGrade>-1? norm(r[iGrade]) : '',
+        teacher:  iTeach>-1? norm(r[iTeach]) : ''
+      };
     });
   }
 
   function mapNamesToImages(){
-    if(!namesCSV.length) { lastMatchCount = 0; return; }
-    // Map by filename
-    const byFile = new Map();
-    namesCSV.forEach(n=>{ if(n.filename) byFile.set(n.filename.toLowerCase(), n); });
-    let matched = 0;
+    if(!namesCSV.length){ lastMatchCount=0; csvStatus.textContent='No CSV loaded.'; return; }
+    const byFile=new Map(); namesCSV.forEach(n=>{ if(n.filename) byFile.set(n.filename.toLowerCase(), n); });
+    let matched=0;
     images.forEach(img=>{
-      const byExact = byFile.get((img.fileName||'').toLowerCase());
-      if(byExact){
-        img.first=byExact.first; img.last=byExact.last; img.name=byExact.name || `${byExact.first} ${byExact.last}`.trim();
+      const m = byFile.get((img.fileName||'').toLowerCase());
+      if(m){
+        Object.assign(img, {first:m.first,last:m.last,name:m.name||`${m.first} ${m.last}`.trim(),grade:m.grade,teacher:m.teacher});
         matched++;
       }
     });
-    // Fill remaining in sequence for those without a mapped name
-    let seq = namesCSV.filter(n=>!n.filename);
-    let idx=0;
+    // sequential fill
+    const seq = namesCSV.filter(n=>!n.filename);
+    let s=0;
     images.forEach(img=>{
-      if(!img.name && idx<seq.length){
-        const n = seq[idx++]; img.first=n.first; img.last=n.last; img.name=n.name || `${n.first} ${n.last}`.trim();
+      if(!img.name && s<seq.length){
+        const n = seq[s++]; Object.assign(img, {first:n.first,last:n.last,name:n.name||`${n.first} ${n.last}`.trim(),grade:n.grade,teacher:n.teacher});
         matched++;
       }
     });
-    lastMatchCount = matched;
-  }
-
-  function sortImages(){
-    const key = sortBy.value;
-    const dir = sortDir.value==='desc' ? -1 : 1;
-    const collator = new Intl.Collator(undefined,{numeric:true,sensitivity:'base'});
-    if(key==='original') return;
-    const get = (o)=>{
-      if(key==='first') return o.first||'';
-      if(key==='last')  return o.last||'';
-      if(key==='name')  return (o.name||'').trim();
-      if(key==='file')  return o.fileName||'';
-      return '';
-    };
-    images.sort((a,b)=> collator.compare(get(a), get(b)) * dir);
+    lastMatchCount=matched;
   }
 
   function updateCsvStatus(justLoaded=false){
-    if(!namesCSV.length){
-      csvStatus.textContent = 'No CSV loaded. Headers accepted: name OR first,last (+ optional filename).';
-      return;
-    }
-    const msg = `CSV loaded: ${namesCSV.length} names • matched ${lastMatchCount} of ${images.length} photos` +
-                (justLoaded ? ' • (Names will appear under photos when generating)' : '');
-    csvStatus.textContent = msg;
+    if(!namesCSV.length){ csvStatus.textContent='No CSV loaded.'; return; }
+    csvStatus.textContent = `CSV loaded: ${namesCSV.length} rows • matched ${lastMatchCount} of ${images.length} photos` +
+      (justLoaded?' • Names will appear under photos when generating.':'');
   }
 
-  // Logo
-  logoDrop.addEventListener('drop', e => handleLogoFile(e.dataTransfer.files));
-  logoPick.addEventListener('change', e => handleLogoFile(e.target.files));
-  async function handleLogoFile(fileList){
-    const file = Array.from(fileList).find(f => f.type.startsWith('image/'));
-    if(!file) return;
-    const img = await loadBlobAsImage(file);
-    logo = img;
+  function sortImages(){
+    const keys = [
+      [sort1Key.value, sort1Dir.value],
+      [sort2Key.value, sort2Dir.value],
+      [sort3Key.value, sort3Dir.value],
+    ].filter(([k])=>k && k!=='none');
+    if(!keys.length) return;
+    const coll = new Intl.Collator(undefined,{numeric:true,sensitivity:'base'});
+    const get = (o,k)=> (k==='grade'?o.grade: k==='teacher'?o.teacher: k==='last'?o.last: k==='first'?o.first:'') || '';
+    images.sort((a,b)=>{
+      for(const [k,dir] of keys){
+        const cmp = coll.compare(get(a,k), get(b,k));
+        if(cmp!==0) return dir==='desc' ? -cmp : cmp;
+      }
+      return 0;
+    });
+  }
+
+  // ----- Logo
+  logoPick.addEventListener('change', async (e)=>{
+    const file = e.target.files?.[0];
+    if(!file){ logoPick.value=''; logoName.textContent='No file'; return; }
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = ()=>{ logo = {img, w:img.naturalWidth, h:img.naturalHeight, url}; logoName.textContent=file.name; };
+    img.src = url;
+    logoPick.value=''; // reset
+  });
+
+  // ----- Backgrounds
+  bgPick.addEventListener('change', e => { handleBgFiles(e.target.files); bgPick.value=''; });
+  async function handleBgFiles(fileList){
+    const files = Array.from(fileList).filter(f => f.type.startsWith('image/')).slice(0, 10 - backgrounds.length);
+    if(!files.length) return;
+    const loaded = await Promise.all(files.map(loadBlobAsImage));
+    loaded.forEach((o,i)=>{ o.label = `Background ${backgrounds.length + i + 1}`; });
+    backgrounds.push(...loaded);
+    if (bgIndex < 0 && backgrounds.length > 0) bgIndex = 0;
+    renderBgList();
   }
   function loadBlobAsImage(file){
     return new Promise((resolve,reject)=>{
@@ -490,21 +504,6 @@
       img.src = url;
     });
   }
-
-  // Backgrounds (1–10)
-  bgPick.addEventListener('change', e => handleBgFiles(e.target.files));
-  bgDrop.addEventListener('drop', e => handleBgFiles(e.dataTransfer.files));
-  async function handleBgFiles(fileList){
-    const files = Array.from(fileList).filter(f => f.type.startsWith('image/')).slice(0, 10 - backgrounds.length);
-    if(!files.length) return;
-    const loaded = await Promise.all(files.map(loadBlobAsImage));
-    loaded.forEach((o,i)=>{ o.label = `Background ${backgrounds.length + i + 1}`; });
-    backgrounds.push(...loaded);
-    // Auto-select first background if none selected yet
-    if (bgIndex < 0 && backgrounds.length > 0) bgIndex = 0;
-    renderBgList();
-  }
-
   function renderBgList(){
     bgList.innerHTML = '';
     backgrounds.forEach((b, i)=>{
@@ -512,29 +511,25 @@
       const img = document.createElement('img'); img.src=b.img.src; card.appendChild(img);
       const choose = document.createElement('div'); choose.className='bg-choose' + (i===bgIndex?' active':'');
       const radio = document.createElement('input'); radio.type='radio'; radio.name='bgPickRadio';
-      radio.checked = i===bgIndex;
-      radio.addEventListener('change', ()=>{ bgIndex = i; renderBgList(); });
-      choose.appendChild(radio);
-      const txt = document.createElement('span'); txt.textContent = b.label; choose.appendChild(txt);
-      card.appendChild(choose);
-      bgList.appendChild(card);
+      radio.checked = i===bgIndex; radio.addEventListener('change', ()=>{ bgIndex = i; renderBgList(); });
+      choose.appendChild(radio); choose.appendChild(document.createTextNode(b.label));
+      card.appendChild(choose); bgList.appendChild(card);
     });
   }
 
-  // Generate / Clear
+  // ----- Generate / Clear
   btnGen.addEventListener('click', onGenerate);
   btnClear.addEventListener('click', ()=>{
     images.forEach(o=> o.url && URL.revokeObjectURL(o.url));
     backgrounds.forEach(b=> b.url && URL.revokeObjectURL(b.url));
     images = []; namesCSV = []; logo = null; backgrounds = []; bgIndex = -1;
     thumbs.innerHTML=''; bgList.innerHTML=''; output.innerHTML=''; downloads.innerHTML='';
-    btnGen.disabled = true; lastMatchCount = 0; updateCsvStatus();
+    btnGen.disabled = true; lastMatchCount = 0; csvStatus.textContent='No CSV loaded.'; logoName.textContent='No file';
   });
 
-  // Enable generate if images present
   document.addEventListener('change', ()=>{ btnGen.disabled = images.length === 0; });
 
-  // Generate
+  // ----- Generate
   function onGenerate(){
     output.innerHTML = '';
     downloads.innerHTML = '';
@@ -551,39 +546,31 @@
 
     const headerText = buildHeaderText();
     const headerSize = Math.max(10, parseInt(titleSizeEl.value,10));
-    const nameSize = Math.max(12, parseInt(nameSizeEl.value,10));
+    const nameSize = 36; // constant baseline; text box height below uses nameSizeSetting if needed
+    const nameSizeSetting = Math.max(12, nameSize); // from earlier logic if you want to expose
     const logoH = Math.max(20, parseInt(logoSizeEl.value,10));
 
     const showNames = (()=>{
-      if(showNamesEl.value==='on') return true;
+      if(showNamesEl.value==='on')  return true;
       if(showNamesEl.value==='off') return false;
       return namesCSV.length>0; // auto
     })();
 
-    // Header area
+    // Title space
     let headerPad = headerText ? Math.ceil(headerSize * 1.6) : 0;
     if (logo) headerPad = Math.max(headerPad, Math.ceil(logoH + 20));
 
-    // Name label pad
-    const labelPad = showNames ? Math.ceil(nameSize * 1.35) : 0;
+    // Name label space
+    const labelPad = showNames ? Math.ceil(nameSizeSetting * 1.35) : 0;
 
-    // Content box
     const contentX = M, contentY = M + headerPad;
     const contentW = W - 2*M;
     const contentH = H - 2*M - headerPad;
-    if (contentW <= 0 || contentH <= 0) {
-      alert('Canvas too small for chosen margins/header. Reduce Margin or Header Size.');
-      return;
-    }
+    if (contentW<=0 || contentH<=0){ alert('Canvas too small for chosen margins/header.'); return; }
 
-    // Layout & pagination
     const pages = paginateTiles(images.length, wantedCols, wantedRows, contentW, contentH, G, labelPad);
-    if (pages.tilesPerPage === 0) {
-      alert('Settings produce zero tiles per page (try fewer rows/columns, smaller margins, or larger canvas).');
-      return;
-    }
+    if (pages.tilesPerPage === 0){ alert('Zero tiles per page with current settings.'); return; }
 
-    // Build canvases
     const pageCount = pages.pageCount;
     const placements = pages.pagePlacements;
 
@@ -592,15 +579,11 @@
       c.width = W; c.height = H;
       const ctx = c.getContext('2d');
 
-      // Fallback color
+      // Background
       ctx.fillStyle = bgColor; ctx.fillRect(0,0,W,H);
+      if (bgIndex>=0 && backgrounds[bgIndex]) drawCover(ctx, backgrounds[bgIndex].img, 0,0,W,H);
 
-      // Background image (cover) — now auto-selected first upload
-      if (bgIndex>=0 && backgrounds[bgIndex]){
-        drawCover(ctx, backgrounds[bgIndex].img, 0,0,W,H);
-      }
-
-      // Header: logo + text
+      // Header
       if (logo){
         const scale = logoH / (logo.h||logo.img.naturalHeight||logo.img.height);
         const w = (logo.w||logo.img.naturalWidth||logo.img.width) * scale;
@@ -620,18 +603,16 @@
         ctx.restore();
       }
 
-      // Draw tiles (+ names)
+      // Tiles
       const cells = placements[p];
-      ctx.font = `600 ${nameSize}px Inter, Arial, sans-serif`;
+      ctx.font = `600 ${nameSizeSetting}px Inter, Arial, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
-      const textStroke = Math.max(2, Math.ceil(nameSize/16));
+      const textStroke = Math.max(2, Math.ceil(nameSizeSetting/16));
 
       for (const cell of cells){
-        const imgObj = images[cell.index];
-        if(!imgObj) continue;
-        const x = contentX + cell.x;
-        const y = contentY + cell.y;
+        const imgObj = images[cell.index]; if(!imgObj) continue;
+        const x = contentX + cell.x, y = contentY + cell.y;
 
         drawCropped4x5(ctx, imgObj.img, x, y, cell.tileW, cell.tileH);
 
@@ -640,19 +621,17 @@
           if (name){
             const tx = x + cell.tileW/2;
             const ty = y + cell.tileH + Math.max(4, Math.round(labelPad*0.18));
-            ctx.lineWidth = textStroke; ctx.strokeStyle='rgba(0,0,0,.55)';
-            ctx.strokeText(name, tx, ty);
-            ctx.fillStyle = '#ffffff';
-            ctx.fillText(name, tx, ty);
+            ctx.lineWidth = textStroke; ctx.strokeStyle='rgba(0,0,0,.55)'; ctx.strokeText(name, tx, ty);
+            ctx.fillStyle = '#ffffff'; ctx.fillText(name, tx, ty);
           }
         }
       }
 
-      // DOM & download
+      // Output
       output.appendChild(c);
       const a = document.createElement('a');
-      a.className = 'btn';
-      a.download = pageCount > 1 ? `composite_${p+1}of${pageCount}.png` : 'composite.png';
+      a.className='btn';
+      a.download = pageCount>1 ? `composite_${p+1}of${pageCount}.png` : 'composite.png';
       a.textContent = `Download ${a.download}`;
       a.href = c.toDataURL('image/png');
       downloads.appendChild(a);
@@ -663,16 +642,13 @@
     const school = (schoolEl.value||'').trim();
     const grade  = (gradeEl.value||'').trim();
     const year   = (yearEl.value||'').trim();
-    const bits = [];
-    if (school) bits.push(school);
-    if (grade)  bits.push(`Grade ${grade}`);
-    if (year)   bits.push(year);
+    const bits=[]; if(school) bits.push(school); if(grade) bits.push(`Grade ${grade}`); if(year) bits.push(year);
     return bits.join(' • ');
   }
 
-  // Layout math
+  // Layout
   function paginateTiles(count, wantedCols, wantedRows, contentW, contentH, G, labelPad){
-    const ratio = 4/5; // width:height
+    const ratio = 4/5;
     const autoC = wantedCols===0, autoR = wantedRows===0;
 
     function score(c, r){
@@ -684,68 +660,53 @@
         const s = contentH / neededH;
         tileW *= s; tileH *= s; cellH *= s;
       }
-      return {tileW, tileH, cellH, perPage: c*r};
+      return {tileW, tileH, cellH, perPage:c*r};
     }
 
     let best=null, bestC=1, bestR=1;
-    if (!autoC && !autoR){
-      bestC = Math.max(1, wantedCols);
-      bestR = Math.max(1, wantedRows);
-      best = score(bestC, bestR);
-    } else {
-      let Cmin = autoC ? 1 : wantedCols, Cmax = autoC ? 16 : wantedCols;
-      let Rmin = autoR ? 1 : wantedRows, Rmax = autoR ? 20 : wantedRows;
-      let bestArea = -1;
-      for (let C=Cmin; C<=Cmax; C++){
-        for (let R=Rmin; R<=Rmax; R++){
-          const s = score(C,R);
-          if (s.perPage<1) continue;
-          const area = s.tileW*s.tileH;
+    if (!autoC && !autoR){ bestC=Math.max(1,wantedCols); bestR=Math.max(1,wantedRows); best=score(bestC,bestR); }
+    else{
+      let Cmin = autoC?1:wantedCols, Cmax = autoC?16:wantedCols;
+      let Rmin = autoR?1:wantedRows, Rmax = autoR?20:wantedRows;
+      let bestArea=-1;
+      for(let C=Cmin; C<=Cmax; C++){
+        for(let R=Rmin; R<=Rmax; R++){
+          const s=score(C,R); if(s.perPage<1) continue;
+          const area=s.tileW*s.tileH;
           const better = (area>bestArea) || (area===bestArea && s.perPage>(best?.perPage||0)) || (area===bestArea && s.perPage===(best?.perPage||0) && C<(bestC||1));
-          if (better){ bestArea=area; best=s; bestC=C; bestR=R; }
+          if(better){ bestArea=area; best=s; bestC=C; bestR=R; }
         }
       }
     }
 
-    if (!best || best.tileW<=0 || best.tileH<=0) return {pageCount:0, tilesPerPage:0, pagePlacements:[]};
+    if(!best || best.tileW<=0 || best.tileH<=0) return {pageCount:0, tilesPerPage:0, pagePlacements:[]};
     const perPage = Math.max(1, best.perPage);
     const pageCount = Math.ceil(count / perPage);
     const placements = [];
 
     for(let p=0; p<pageCount; p++){
-      const start = p*perPage;
-      const end = Math.min(count, start+perPage);
-      const cells = [];
-      for (let i=start; i<end; i++){
-        const k = i - start;
-        const r = Math.floor(k / bestC);
-        const c = k % bestC;
-        const x = c*(best.tileW + G);
-        const y = r*(best.cellH + G);
-        cells.push({x, y, tileW: best.tileW, tileH: best.tileH, cellH: best.cellH, index:i});
+      const start=p*perPage, end=Math.min(count,start+perPage), cells=[];
+      for(let i=start; i<end; i++){
+        const k=i-start, r=Math.floor(k/bestC), c=k%bestC;
+        const x=c*(best.tileW+G), y=r*(best.cellH+G);
+        cells.push({x,y,tileW:best.tileW,tileH:best.tileH,cellH:best.cellH,index:i});
       }
       placements.push(cells);
     }
-    return {pageCount, tilesPerPage: perPage, pagePlacements: placements};
+    return {pageCount, tilesPerPage:perPage, pagePlacements:placements};
   }
 
   // Drawing helpers
   function drawCropped4x5(ctx, img, dx, dy, dw, dh){
-    const target = 4/5;
-    const iw = img.naturalWidth || img.width;
-    const ih = img.naturalHeight || img.height;
-    const r = iw/ih;
-    let sx, sy, sw, sh;
-    if (r > target){ sh = ih; sw = ih*target; sx=(iw-sw)/2; sy=0; }
-    else { sw = iw; sh = iw/target; sx=0; sy=(ih-sh)/2; }
+    const target=4/5, iw=img.naturalWidth||img.width, ih=img.naturalHeight||img.height, r=iw/ih;
+    let sx,sy,sw,sh;
+    if(r>target){ sh=ih; sw=ih*target; sx=(iw-sw)/2; sy=0; }
+    else{ sw=iw; sh=iw/target; sx=0; sy=(ih-sh)/2; }
     ctx.drawImage(img, sx,sy,sw,sh, dx,dy,dw,dh);
   }
   function drawCover(ctx, img, x,y,w,h){
-    const iw = img.naturalWidth || img.width;
-    const ih = img.naturalHeight || img.height;
-    const scale = Math.max(w/iw, h/ih);
-    const dw = iw*scale, dh = ih*scale;
-    const dx = x + (w-dw)/2, dy = y + (h-dh)/2;
+    const iw=img.naturalWidth||img.width, ih=img.naturalHeight||img.height;
+    const s=Math.max(w/iw,h/ih), dw=iw*s, dh=ih*s, dx=x+(w-dw)/2, dy=y+(h-dh)/2;
     ctx.drawImage(img, dx,dy,dw,dh);
   }
 })();
