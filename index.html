@@ -8,39 +8,38 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#0b1020; --panel:#111729; --ink:#e6edf3; --muted:#9aa4b2; --accent:#0ea5e9; --border:#22304a;
-    --radius:14px; --shadow:0 6px 18px rgba(0,0,0,.25);
-  }
+  :root{ --bg:#0b1020; --panel:#111729; --ink:#e6edf3; --muted:#9aa4b2; --accent:#0ea5e9; --border:#22304a;
+         --radius:14px; --shadow:0 6px 18px rgba(0,0,0,.25); }
   *{box-sizing:border-box}
   body{margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,Helvetica,sans-serif;
-    background:linear-gradient(180deg,#0b1020 0%,#0c172f 100%); color:var(--ink);}
+       background:linear-gradient(180deg,#0b1020 0%,#0c172f 100%); color:var(--ink);}
   header{padding:22px 20px 10px; text-align:center}
   header h1{margin:.2rem 0 0; font-size:1.35rem; font-weight:700}
   header p{margin:.3rem 0 0; color:var(--muted); font-size:.95rem}
 
   .wrap{max-width:1180px; margin:0 auto; padding:8px 18px 70px}
   .card{background:rgba(9,14,28,.6); backdrop-filter:blur(10px); border:1px solid var(--border);
-    border-radius:var(--radius); box-shadow:var(--shadow); margin-top:16px;}
+        border-radius:var(--radius); box-shadow:var(--shadow); margin-top:16px;}
   .card h2{font-size:1rem; font-weight:700; margin:0; padding:16px 16px 0}
   .card .body{padding:16px}
 
   .grid-2{display:grid; grid-template-columns:1.1fr .9fr; gap:16px}
   @media (max-width:980px){ .grid-2{grid-template-columns:1fr}}
 
-  /* Uploads */
   .drop{border:2px dashed #2a3b61; border-radius:12px; padding:18px; text-align:center; color:var(--muted);
-    transition:.2s border-color,.2s background;}
+        transition:.2s border-color,.2s background;}
   .drop.drag{border-color:var(--accent); background:rgba(14,165,233,.08); color:var(--ink)}
   .drop input{display:none}
+
   .thumbs{display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:12px; margin-top:12px}
   .thumb{border:1px solid var(--border); border-radius:10px; overflow:hidden; background:#0e1425;
-    aspect-ratio:4/5; display:flex; align-items:center; justify-content:center; position:relative}
+         aspect-ratio:4/5; display:flex; align-items:center; justify-content:center; position:relative}
   .thumb[draggable="true"]{cursor:grab}
   .thumb.dragging{opacity:.5}
   .thumb img{width:100%; height:100%; object-fit:cover}
   .thumb .label{position:absolute; left:0; right:0; bottom:0; background:linear-gradient(180deg,rgba(0,0,0,0) 0,rgba(0,0,0,.55) 85%);
-    color:#fff; font-size:.78rem; padding:6px 8px; text-shadow:0 1px 2px rgba(0,0,0,.5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+               color:#fff; font-size:.78rem; padding:6px 8px; text-shadow:0 1px 2px rgba(0,0,0,.5);
+               white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .thumb .idx{position:absolute; top:6px; left:6px; font-size:.72rem; background:rgba(0,0,0,.55); color:#fff; padding:2px 6px; border-radius:999px}
 
   .row{display:flex; gap:10px; flex-wrap:wrap}
@@ -85,13 +84,12 @@
           <strong>Drag & drop photos</strong> here or
           <label for="filePick" class="btn" role="button">Browse</label>
           <input id="filePick" type="file" accept="image/*" multiple>
-          <div class="small" style="margin-top:8px">Tip: drag thumbnails to set the exact order you want on the composite.</div>
+          <div class="small" style="margin-top:8px">Drag thumbnails to set the exact order used in the composite.</div>
         </div>
         <div id="thumbs" class="thumbs" aria-live="polite"></div>
       </div>
 
       <div>
-        <!-- Optional background images (keep here) -->
         <div class="fieldset">
           <div class="subhead">Backgrounds (optional)</div>
           <div class="row" style="justify-content:space-between; align-items:center">
@@ -112,13 +110,13 @@
     <h2>2) Settings</h2>
     <div class="body">
 
-      <!-- Title group -->
+      <!-- Title -->
       <div class="fieldset">
         <div class="subhead">Title</div>
         <div class="controls">
           <div><label>School<input id="school" type="text" placeholder="e.g., Lincoln Elementary"></label></div>
-          <div><label>Grade<input id="grade" type="text" placeholder="e.g., 3"></label></div>
-          <div><label>Year<input id="year" type="text" placeholder="e.g., 2025–26"></label></div>
+          <div><label>Grade<input id="grade" type="text" placeholder="e.g., K–2"></label></div>
+          <div><label>Year<input id="year" type="text" placeholder="e.g., 2025–2026"></label></div>
           <div><label>Title font size (px)<input id="titleSize" type="number" value="72" min="20" step="2"></label></div>
           <div>
             <label>Logo (optional)
@@ -133,7 +131,7 @@
         </div>
       </div>
 
-      <!-- Canvas group -->
+      <!-- Canvas -->
       <div class="fieldset">
         <div class="subhead">Canvas</div>
         <div class="controls">
@@ -163,7 +161,7 @@
             <div style="flex:1"><label>Margins (px)<input id="margin" type="number" value="80" min="0"></label></div>
             <div style="flex:1"><label>Show names under photos
               <select id="showNames">
-                <option value="auto" selected>Auto (on if CSV)</option>
+                <option value="auto" selected>Auto (on if any names)</option>
                 <option value="on">On</option>
                 <option value="off">Off</option>
               </select></label>
@@ -172,12 +170,12 @@
         </div>
       </div>
 
-      <!-- Image Names group -->
+      <!-- Image Names -->
       <div class="fieldset">
         <div class="subhead">Image Names</div>
         <div class="controls">
           <div style="grid-column:1/-1">
-            <label>Upload CSV (names, optional)</label>
+            <label>Upload CSV (optional)</label>
             <div class="row" style="align-items:center; margin-top:6px">
               <label for="csvPick" class="btn">Browse CSV</label>
               <input id="csvPick" type="file" accept=".csv,text/csv">
@@ -186,53 +184,42 @@
             <div class="small" style="margin-top:6px">Headers accepted: <code>first,last</code> (or <code>name</code>), optional <code>filename</code>, <code>grade</code>, <code>teacher</code>.</div>
           </div>
 
-          <!-- 3-level sort -->
-          <div>
-            <label>Sort 1
-              <select id="sort1Key">
-                <option value="none">(none)</option>
-                <option value="grade">Grade</option>
-                <option value="teacher">Teacher</option>
-                <option value="last">Last name</option>
-                <option value="first">First name</option>
-              </select>
-            </label>
-          </div>
+          <div><label>Name font size (px)<input id="nameSize" type="number" value="36" min="14" step="2"></label></div>
+
+          <div><label>Sort 1
+            <select id="sort1Key">
+              <option value="none">(none)</option>
+              <option value="grade">Grade</option>
+              <option value="teacher">Teacher</option>
+              <option value="last">Last name</option>
+              <option value="first">First name</option>
+            </select></label></div>
           <div><label>Dir
             <select id="sort1Dir"><option value="asc">A→Z</option><option value="desc">Z→A</option></select></label></div>
 
-          <div>
-            <label>Sort 2
-              <select id="sort2Key">
-                <option value="none">(none)</option>
-                <option value="grade">Grade</option>
-                <option value="teacher">Teacher</option>
-                <option value="last">Last name</option>
-                <option value="first">First name</option>
-              </select>
-            </label>
-          </div>
+          <div><label>Sort 2
+            <select id="sort2Key">
+              <option value="none">(none)</option>
+              <option value="grade">Grade</option>
+              <option value="teacher">Teacher</option>
+              <option value="last">Last name</option>
+              <option value="first">First name</option>
+            </select></label></div>
           <div><label>Dir
             <select id="sort2Dir"><option value="asc">A→Z</option><option value="desc">Z→A</option></select></label></div>
 
-          <div>
-            <label>Sort 3
-              <select id="sort3Key">
-                <option value="none">(none)</option>
-                <option value="grade">Grade</option>
-                <option value="teacher">Teacher</option>
-                <option value="last">Last name</option>
-                <option value="first">First name</option>
-              </select>
-            </label>
-          </div>
+          <div><label>Sort 3
+            <select id="sort3Key">
+              <option value="none">(none)</option>
+              <option value="grade">Grade</option>
+              <option value="teacher">Teacher</option>
+              <option value="last">Last name</option>
+              <option value="first">First name</option>
+            </select></label></div>
           <div><label>Dir
             <select id="sort3Dir"><option value="asc">A→Z</option><option value="desc">Z→A</option></select></label></div>
 
-          <div style="grid-column:1/-1">
-            <button id="applySort" class="btn">Apply Sort</button>
-            <div class="small" style="margin-top:6px">Tip: You can still drag thumbnails manually after sorting.</div>
-          </div>
+          <div style="grid-column:1/-1"><button id="applySort" class="btn">Apply Sort</button></div>
         </div>
       </div>
 
@@ -256,7 +243,7 @@
 
 <script>
 (() => {
-  // ----- Elements
+  // Elements
   const drop = document.getElementById('drop');
   const filePick = document.getElementById('filePick');
   const thumbs = document.getElementById('thumbs');
@@ -279,6 +266,8 @@
   const logoName = document.getElementById('logoName');
   const logoSizeEl = document.getElementById('logoSize');
 
+  const nameSizeEl = document.getElementById('nameSize');
+
   const csvPick = document.getElementById('csvPick');
   const csvStatus = document.getElementById('csvStatus');
   const sort1Key = document.getElementById('sort1Key');
@@ -297,25 +286,23 @@
   const output = document.getElementById('output');
   const downloads = document.getElementById('downloads');
 
-  // ----- State
-  let images = [];      // [{img,url,w,h,fileName, first?,last?,name?,grade?,teacher?}]
+  // State
+  let images = [];      // [{img,url,fileName, first?,last?,name?,grade?,teacher?}]
   let namesCSV = [];    // [{first,last,name,filename,grade,teacher}]
   let logo = null;      // {img,w,h,url}
   let backgrounds = []; // [{img,w,h,label,url}]
   let bgIndex = -1;
   let lastMatchCount = 0;
 
-  // ----- Preset
+  // Preset
   function setPreset(){ const [w,h]=preset.value.split('x').map(n=>parseInt(n,10)); cw.value=w; ch.value=h; }
   preset.addEventListener('change', setPreset);
 
-  // ----- Drag & drop visuals (no click-to-open: fixes double-select)
+  // Dropzone visuals and handlers
   ['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); e.stopPropagation(); drop.classList.add('drag'); }));
   ['dragleave','drop'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); e.stopPropagation(); drop.classList.remove('drag'); }));
   drop.addEventListener('drop', e => handlePhotoFiles(e.dataTransfer.files));
-
-  // Browse button opens file input—no extra listeners on the dropzone
-  filePick.addEventListener('change', e => { handlePhotoFiles(e.target.files); filePick.value=''; }); // reset after
+  filePick.addEventListener('change', e => { handlePhotoFiles(e.target.files); filePick.value=''; });
 
   async function handlePhotoFiles(fileList){
     const files = Array.from(fileList).filter(f => f.type.startsWith('image/'));
@@ -331,13 +318,13 @@
     return new Promise((resolve,reject)=>{
       const url = URL.createObjectURL(file);
       const img = new Image();
-      img.onload = () => resolve({img, url, w:img.naturalWidth, h:img.naturalHeight, fileName:(file.name||'').toLowerCase()});
+      img.onload = () => resolve({img, url, fileName:(file.name||'').toLowerCase()});
       img.onerror = reject;
       img.src = url;
     });
   }
 
-  // ----- Thumbnails (drag to reorder)
+  // Thumbnails with drag-to-reorder
   function refreshThumbs(){
     thumbs.innerHTML = '';
     images.forEach((o,i)=>{
@@ -365,7 +352,7 @@
     });
   }
 
-  // ----- CSV + multi-level sort (grade/teacher/first/last)
+  // CSV + sorting
   csvPick.addEventListener('change', async (e)=>{
     const file = e.target.files?.[0];
     if(!file){ csvPick.value=''; return; }
@@ -374,9 +361,9 @@
     mapNamesToImages();
     sortImages();
     refreshThumbs();
-    if (namesCSV.length && showNamesEl.value==='auto') showNamesEl.value='on';
+    ensureShowNamesAuto();
     updateCsvStatus(true);
-    csvPick.value=''; // allow re-selecting same file later
+    csvPick.value=''; // allow re-selecting same file
   });
   applySort.addEventListener('click', ()=>{ sortImages(); refreshThumbs(); });
 
@@ -427,7 +414,7 @@
   }
 
   function mapNamesToImages(){
-    if(!namesCSV.length){ lastMatchCount=0; csvStatus.textContent='No CSV loaded.'; return; }
+    if(!namesCSV.length){ lastMatchCount=0; return; }
     const byFile=new Map(); namesCSV.forEach(n=>{ if(n.filename) byFile.set(n.filename.toLowerCase(), n); });
     let matched=0;
     images.forEach(img=>{
@@ -437,7 +424,6 @@
         matched++;
       }
     });
-    // sequential fill
     const seq = namesCSV.filter(n=>!n.filename);
     let s=0;
     images.forEach(img=>{
@@ -453,6 +439,11 @@
     if(!namesCSV.length){ csvStatus.textContent='No CSV loaded.'; return; }
     csvStatus.textContent = `CSV loaded: ${namesCSV.length} rows • matched ${lastMatchCount} of ${images.length} photos` +
       (justLoaded?' • Names will appear under photos when generating.':'');
+  }
+
+  function ensureShowNamesAuto(){
+    const anyNames = images.some(o => (o.name && o.name.trim()) || o.first || o.last);
+    if (showNamesEl.value==='auto' && anyNames) showNamesEl.value='on';
   }
 
   function sortImages(){
@@ -473,7 +464,7 @@
     });
   }
 
-  // ----- Logo
+  // Logo
   logoPick.addEventListener('change', async (e)=>{
     const file = e.target.files?.[0];
     if(!file){ logoPick.value=''; logoName.textContent='No file'; return; }
@@ -484,7 +475,7 @@
     logoPick.value=''; // reset
   });
 
-  // ----- Backgrounds
+  // Backgrounds
   bgPick.addEventListener('change', e => { handleBgFiles(e.target.files); bgPick.value=''; });
   async function handleBgFiles(fileList){
     const files = Array.from(fileList).filter(f => f.type.startsWith('image/')).slice(0, 10 - backgrounds.length);
@@ -517,7 +508,7 @@
     });
   }
 
-  // ----- Generate / Clear
+  // Generate / Clear
   btnGen.addEventListener('click', onGenerate);
   btnClear.addEventListener('click', ()=>{
     images.forEach(o=> o.url && URL.revokeObjectURL(o.url));
@@ -526,10 +517,8 @@
     thumbs.innerHTML=''; bgList.innerHTML=''; output.innerHTML=''; downloads.innerHTML='';
     btnGen.disabled = true; lastMatchCount = 0; csvStatus.textContent='No CSV loaded.'; logoName.textContent='No file';
   });
-
   document.addEventListener('change', ()=>{ btnGen.disabled = images.length === 0; });
 
-  // ----- Generate
   function onGenerate(){
     output.innerHTML = '';
     downloads.innerHTML = '';
@@ -546,22 +535,16 @@
 
     const headerText = buildHeaderText();
     const headerSize = Math.max(10, parseInt(titleSizeEl.value,10));
-    const nameSize = 36; // constant baseline; text box height below uses nameSizeSetting if needed
-    const nameSizeSetting = Math.max(12, nameSize); // from earlier logic if you want to expose
+    const namePx = Math.max(12, parseInt(nameSizeEl.value,10) || 36);
     const logoH = Math.max(20, parseInt(logoSizeEl.value,10));
 
-    const showNames = (()=>{
-      if(showNamesEl.value==='on')  return true;
-      if(showNamesEl.value==='off') return false;
-      return namesCSV.length>0; // auto
-    })();
+    const anyNames = images.some(o => (o.name && o.name.trim()) || o.first || o.last);
+    const showNames = (showNamesEl.value==='on') || (showNamesEl.value==='auto' && anyNames);
 
-    // Title space
     let headerPad = headerText ? Math.ceil(headerSize * 1.6) : 0;
     if (logo) headerPad = Math.max(headerPad, Math.ceil(logoH + 20));
 
-    // Name label space
-    const labelPad = showNames ? Math.ceil(nameSizeSetting * 1.35) : 0;
+    const labelPad = showNames ? Math.ceil(namePx * 1.35) : 0;
 
     const contentX = M, contentY = M + headerPad;
     const contentW = W - 2*M;
@@ -603,12 +586,12 @@
         ctx.restore();
       }
 
-      // Tiles
+      // Tiles + names
       const cells = placements[p];
-      ctx.font = `600 ${nameSizeSetting}px Inter, Arial, sans-serif`;
+      ctx.font = `600 ${namePx}px Inter, Arial, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
-      const textStroke = Math.max(2, Math.ceil(nameSizeSetting/16));
+      const textStroke = Math.max(2, Math.ceil(namePx/16));
 
       for (const cell of cells){
         const imgObj = images[cell.index]; if(!imgObj) continue;
@@ -621,7 +604,8 @@
           if (name){
             const tx = x + cell.tileW/2;
             const ty = y + cell.tileH + Math.max(4, Math.round(labelPad*0.18));
-            ctx.lineWidth = textStroke; ctx.strokeStyle='rgba(0,0,0,.55)'; ctx.strokeText(name, tx, ty);
+            // Stroke + fill for contrast on light/dark BGs
+            ctx.lineWidth = textStroke; ctx.strokeStyle='rgba(0,0,0,.6)'; ctx.strokeText(name, tx, ty);
             ctx.fillStyle = '#ffffff'; ctx.fillText(name, tx, ty);
           }
         }
@@ -646,7 +630,7 @@
     return bits.join(' • ');
   }
 
-  // Layout
+  // Layout/pagination
   function paginateTiles(count, wantedCols, wantedRows, contentW, contentH, G, labelPad){
     const ratio = 4/5;
     const autoC = wantedCols===0, autoR = wantedRows===0;
