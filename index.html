@@ -61,7 +61,7 @@
 <body>
 <header>
   <h1>Automated Composite Builder</h1>
-  <p>Tiles forced to <strong>4×5</strong>. 10×8 @ 300 DPI by default. Uploads → Settings → Generate.</p>
+  <p>Tiles forced to <strong>4×5</strong>. Default 10×8″ @ 300 DPI (3000×2400 px). Uploads → Settings → Generate.</p>
 </header>
 
 <div class="wrap">
@@ -234,7 +234,7 @@
 
 <script>
 (() => {
-  // Elements
+  // ----- Elements
   const drop = document.getElementById('drop');
   const filePick = document.getElementById('filePick');
   const thumbs = document.getElementById('thumbs');
@@ -268,7 +268,7 @@
   const sort2Dir = document.getElementById('sort2Dir');
   const sort3Key = document.getElementById('sort3Key');
   const sort3Dir = document.getElementById('sort3Dir');
-  const applySort = document.getElementById('applySort');
+  const applySortBtn = document.getElementById('applySort');
 
   const bgPick = document.getElementById('bgPick');
   const bgList = document.getElementById('bgList');
@@ -278,19 +278,19 @@
   const output = document.getElementById('output');
   const downloads = document.getElementById('downloads');
 
-  // State
-  let images = [];      // [{img,url,fileName, first?,last?,name?,grade?,teacher?}]
+  // ----- State
+  let images = [];      // [{img,url,fileName, first?,last?,name?,grade?,teacher?, _order?}]
   let namesCSV = [];    // [{first,last,name,filename,grade,teacher}]
   let logo = null;      // {img,w,h,url}
   let backgrounds = []; // [{img,w,h,label,url}]
   let bgIndex = -1;
   let lastMatchCount = 0;
 
-  // Preset
+  // ----- Preset
   function setPreset(){ const [w,h]=preset.value.split('x').map(n=>parseInt(n,10)); cw.value=w; ch.value=h; }
   preset.addEventListener('change', setPreset);
 
-  // Dropzone
+  // ----- Dropzone (browse fixed; no double-trigger)
   ['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); e.stopPropagation(); drop.classList.add('drag'); }));
   ['dragleave','drop'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); e.stopPropagation(); drop.classList.remove('drag'); }));
   drop.addEventListener('drop', e => handlePhotoFiles(e.dataTransfer.files));
@@ -301,6 +301,7 @@
     if(!files.length) return;
     const loaded = await Promise.all(files.map(loadImageFile));
     images.push(...loaded);
+    images.forEach((o,i)=>o._order=i); // initial order
     mapNamesToImages();
     refreshThumbs();
     btnGen.disabled = images.length === 0;
@@ -316,7 +317,7 @@
     });
   }
 
-  // Thumbnails (drag to reorder)
+  // ----- Thumbs (with drag-to-reorder)
   function refreshThumbs(){
     thumbs.innerHTML = '';
     images.forEach((o,i)=>{
@@ -337,14 +338,16 @@
         if (!Number.isInteger(from) || from===to) return;
         const moved = images.splice(from,1)[0];
         images.splice(to,0,moved);
+        images.forEach((o,j)=>o._order=j); // keep stable order indices current
         refreshThumbs();
       });
 
       thumbs.appendChild(d);
     });
+    images.forEach((o,i)=>o._order=i); // update after any refresh
   }
 
-  // CSV + sorting
+  // ----- CSV + sorting
   csvPick.addEventListener('change', async (e)=>{
     const file = e.target.files?.[0];
     if(!file){ csvPick.value=''; return; }
@@ -357,14 +360,18 @@
     updateCsvStatus(true);
     csvPick.value=''; // allow re-selecting same file
   });
-  applySort.addEventListener('click', ()=>{ sortImages(); refreshThumbs(); });
+
+  // Apply sort now + also when user clicks
+  const sortEls = [sort1Key, sort1Dir, sort2Key, sort2Dir, sort3Key, sort3Dir];
+  sortEls.forEach(el => el.addEventListener('change', ()=>{ sortImages(); refreshThumbs(); }));
+  applySortBtn.addEventListener('click', ()=>{ sortImages(); refreshThumbs(); });
 
   function norm(s){ return (s??'').toString().trim(); }
-  function stripBOM(s){ return s.replace(/^\uFEFF/, ''); } // key fix
+  function stripBOM(s){ return s.replace(/^\uFEFF/,''); }
   function normKey(s){ return stripBOM(norm(s)).toLowerCase().replace(/\s+/g,' ').replace(/\s/g,'_'); }
 
   function parseCSV(text){
-    text = stripBOM(text); // handle UTF-8 BOM at file start
+    text = stripBOM(text); // handle BOM
     const rows=[]; let i=0, cell='', row=[], inQ=false;
     const pushCell=()=>{ row.push(cell); cell=''; };
     const pushRow=()=>{ rows.push(row); row=[]; };
@@ -410,7 +417,7 @@
 
   function nameFromFile(fileName){
     const base = (fileName||'').replace(/\.[^.]+$/,'').replace(/[_\-\.]+/g,' ').replace(/\s+/g,' ').trim();
-    return base.replace(/\b\w/g, m=>m.toUpperCase()); // Title Case
+    return base.replace(/\b\w/g, m=>m.toUpperCase());
   }
 
   function mapNamesToImages(){
@@ -424,7 +431,6 @@
         matched++;
       }
     });
-    // sequential fill for those without a filename column
     const seq = namesCSV.filter(n=>!n.filename);
     let s=0;
     images.forEach(img=>{
@@ -433,7 +439,6 @@
         matched++;
       }
     });
-    // final safety: if still no name, derive from filename
     images.forEach(img=>{ if(!img.name || !img.name.trim()) img.name = nameFromFile(img.fileName); });
     lastMatchCount=matched;
   }
@@ -449,25 +454,70 @@
     if (showNamesEl.value==='auto' && anyNames) showNamesEl.value='on';
   }
 
+  // ----- Sorting helpers
+  function gradeRank(raw) {
+    if (!raw) return {rank: Number.POSITIVE_INFINITY, norm: ''};
+    const s = String(raw).trim().toLowerCase();
+
+    const alias = {
+      'pre-school':'ps','preschool':'ps','ps':'ps',
+      'pre-k':'pk','prek':'pk','pre k':'pk','prekindergarten':'pk','pk':'pk',
+      'tk':'tk','transitional k':'tk','transitional kindergarten':'tk',
+      'k':'k','kg':'k','kindergarten':'k'
+    };
+    const key = alias[s] || s;
+
+    if (key === 'ps') return {rank: -3, norm: 'PS'};
+    if (key === 'pk') return {rank: -2, norm: 'PK'};
+    if (key === 'tk') return {rank: -1, norm: 'TK'};
+    if (key === 'k')  return {rank: 0,  norm: 'K'};
+
+    const range = key.match(/(k|\d+)\s*[-–]\s*(\d+)/i);
+    if (range) {
+      const a = range[1] === 'k' ? 0 : parseInt(range[1],10);
+      return {rank: a, norm: raw};
+    }
+
+    const m = key.match(/(\d+)/);
+    if (m) return {rank: parseInt(m[1],10), norm: raw};
+
+    return {rank: Number.POSITIVE_INFINITY, norm: raw};
+  }
+  const coll = new Intl.Collator(undefined, {numeric:true, sensitivity:'base'});
+  function cmpText(a, b) {
+    if (!a && b) return 1;
+    if (!b && a) return -1;
+    return coll.compare(a||'', b||'');
+  }
+
   function sortImages(){
     const keys = [
       [sort1Key.value, sort1Dir.value],
       [sort2Key.value, sort2Dir.value],
       [sort3Key.value, sort3Dir.value],
-    ].filter(([k])=>k && k!=='none');
-    if(!keys.length) return;
-    const coll = new Intl.Collator(undefined,{numeric:true,sensitivity:'base'});
-    const get = (o,k)=> (k==='grade'?o.grade: k==='teacher'?o.teacher: k==='last'?o.last: k==='first'?o.first:'') || '';
-    images.sort((a,b)=>{
-      for(const [k,dir] of keys){
-        const cmp = coll.compare(get(a,k), get(b,k));
-        if(cmp!==0) return dir==='desc' ? -cmp : cmp;
+    ].filter(([k]) => k && k !== 'none');
+
+    if (!keys.length) return;
+
+    // stable baseline = current thumbnail order
+    images.forEach((o,i)=>{ o._order = i; });
+
+    images.sort((a, b) => {
+      for (const [k, dir] of keys) {
+        let cmp = 0;
+        if (k === 'grade') {
+          const ga = gradeRank(a.grade), gb = gradeRank(b.grade);
+          cmp = ga.rank === gb.rank ? cmpText(ga.norm, gb.norm) : (ga.rank - gb.rank);
+        } else if (k === 'teacher') cmp = cmpText(a.teacher, b.teacher);
+        else if (k === 'last')    cmp = cmpText(a.last, b.last);
+        else if (k === 'first')   cmp = cmpText(a.first, b.first);
+        if (cmp !== 0) return dir === 'desc' ? -cmp : cmp;
       }
-      return 0;
+      return a._order - b._order; // stable fallback
     });
   }
 
-  // Logo
+  // ----- Logo
   logoPick.addEventListener('change', async (e)=>{
     const file = e.target.files?.[0];
     if(!file){ logoPick.value=''; logoName.textContent='No file'; return; }
@@ -478,7 +528,7 @@
     logoPick.value=''; // reset
   });
 
-  // Backgrounds
+  // ----- Backgrounds
   bgPick.addEventListener('change', e => { handleBgFiles(e.target.files); bgPick.value=''; });
   async function handleBgFiles(fileList){
     const files = Array.from(fileList).filter(f => f.type.startsWith('image/')).slice(0, 10 - backgrounds.length);
@@ -511,7 +561,7 @@
     });
   }
 
-  // Generate / Clear
+  // ----- Generate / Clear
   btnGen.addEventListener('click', onGenerate);
   btnClear.addEventListener('click', ()=>{
     images.forEach(o=> o.url && URL.revokeObjectURL(o.url));
@@ -596,7 +646,6 @@
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
 
-      // choose a contrasting stroke (light over dark text, dark over light text)
       const stroke = getLuma(nameColor) < 128 ? 'rgba(255,255,255,.85)' : 'rgba(0,0,0,.65)';
       const textStroke = Math.max(2, Math.ceil(namePx/16));
 
@@ -642,8 +691,11 @@
     return bits.join(' • ');
   }
 
+  // ----- Layout / pagination
   function paginateTiles(count, wantedCols, wantedRows, contentW, contentH, G, labelPad){
-    const ratio = 4/5, autoC = wantedCols===0, autoR = wantedRows===0;
+    const ratio = 4/5;
+    const autoC = wantedCols===0, autoR = wantedRows===0;
+
     function score(c, r){
       let tileW = (contentW - G*(c-1)) / c;
       let tileH = tileW / ratio;
@@ -655,6 +707,7 @@
       }
       return {tileW, tileH, cellH, perPage:c*r};
     }
+
     let best=null, bestC=1, bestR=1;
     if (!autoC && !autoR){ bestC=Math.max(1,wantedCols); bestR=Math.max(1,wantedRows); best=score(bestC,bestR); }
     else{
@@ -670,10 +723,12 @@
         }
       }
     }
+
     if(!best || best.tileW<=0 || best.tileH<=0) return {pageCount:0, tilesPerPage:0, pagePlacements:[]};
     const perPage = Math.max(1, best.perPage);
     const pageCount = Math.ceil(count / perPage);
     const placements = [];
+
     for(let p=0; p<pageCount; p++){
       const start=p*perPage, end=Math.min(count,start+perPage), cells=[];
       for(let i=start; i<end; i++){
@@ -686,6 +741,7 @@
     return {pageCount, tilesPerPage:perPage, pagePlacements:placements};
   }
 
+  // ----- Drawing helpers
   function drawCropped4x5(ctx, img, dx, dy, dw, dh){
     const target=4/5, iw=img.naturalWidth||img.width, ih=img.naturalHeight||img.height, r=iw/ih;
     let sx,sy,sw,sh;
