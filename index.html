@@ -8,46 +8,37 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{ --bg:#0b1020; --panel:#111729; --ink:#e6edf3; --muted:#9aa4b2; --accent:#0ea5e9; --border:#22304a;
-         --radius:14px; --shadow:0 6px 18px rgba(0,0,0,.25); }
+  :root{ --bg:#0b1020; --panel:#111729; --ink:#e6edf3; --muted:#9aa4b2; --accent:#0ea5e9; --border:#22304a; --radius:14px; --shadow:0 6px 18px rgba(0,0,0,.25); }
   *{box-sizing:border-box}
-  body{margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,Helvetica,sans-serif;
-       background:linear-gradient(180deg,#0b1020 0%,#0c172f 100%); color:var(--ink);}
+  body{margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,Helvetica,sans-serif; background:linear-gradient(180deg,#0b1020 0%,#0c172f 100%); color:var(--ink)}
   header{padding:22px 20px 10px; text-align:center}
   header h1{margin:.2rem 0 0; font-size:1.35rem; font-weight:700}
   header p{margin:.3rem 0 0; color:var(--muted); font-size:.95rem}
 
   .wrap{max-width:1180px; margin:0 auto; padding:8px 18px 70px}
-  .card{background:rgba(9,14,28,.6); backdrop-filter:blur(10px); border:1px solid var(--border);
-        border-radius:var(--radius); box-shadow:var(--shadow); margin-top:16px;}
+  .card{background:rgba(9,14,28,.6); backdrop-filter:blur(10px); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); margin-top:16px}
   .card h2{font-size:1rem; font-weight:700; margin:0; padding:16px 16px 0}
   .card .body{padding:16px}
 
   .grid-2{display:grid; grid-template-columns:1.1fr .9fr; gap:16px}
   @media (max-width:980px){ .grid-2{grid-template-columns:1fr}}
 
-  .drop{border:2px dashed #2a3b61; border-radius:12px; padding:18px; text-align:center; color:var(--muted);
-        transition:.2s border-color,.2s background;}
+  .drop{border:2px dashed #2a3b61; border-radius:12px; padding:18px; text-align:center; color:var(--muted); transition:.2s border-color,.2s background}
   .drop.drag{border-color:var(--accent); background:rgba(14,165,233,.08); color:var(--ink)}
   .drop input{display:none}
 
   .thumbs{display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:12px; margin-top:12px}
-  .thumb{border:1px solid var(--border); border-radius:10px; overflow:hidden; background:#0e1425;
-         aspect-ratio:4/5; display:flex; align-items:center; justify-content:center; position:relative}
+  .thumb{border:1px solid var(--border); border-radius:10px; overflow:hidden; background:#0e1425; aspect-ratio:4/5; display:flex; align-items:center; justify-content:center; position:relative}
   .thumb[draggable="true"]{cursor:grab}
   .thumb.dragging{opacity:.5}
   .thumb img{width:100%; height:100%; object-fit:cover}
-  .thumb .label{position:absolute; left:0; right:0; bottom:0; background:linear-gradient(180deg,rgba(0,0,0,0) 0,rgba(0,0,0,.55) 85%);
-               color:#fff; font-size:.78rem; padding:6px 8px; text-shadow:0 1px 2px rgba(0,0,0,.5);
-               white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .thumb .label{position:absolute; left:0; right:0; bottom:0; background:linear-gradient(180deg,rgba(0,0,0,0) 0,rgba(0,0,0,.55) 85%); color:#fff; font-size:.78rem; padding:6px 8px; text-shadow:0 1px 2px rgba(0,0,0,.5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .thumb .idx{position:absolute; top:6px; left:6px; font-size:.72rem; background:rgba(0,0,0,.55); color:#fff; padding:2px 6px; border-radius:999px}
 
   .row{display:flex; gap:10px; flex-wrap:wrap}
   .controls{display:grid; grid-template-columns:repeat(2,1fr); gap:12px}
-  .controls .row{display:flex; gap:10px}
   .controls label{display:block; font-size:.85rem; color:var(--muted); margin-bottom:6px}
-  .controls input[type="number"], .controls input[type="text"], .controls select, .controls input[type="color"]{
-    width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:#0d1528; color:var(--ink)}
+  .controls input[type="number"], .controls input[type="text"], .controls select, .controls input[type="color"]{width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:#0d1528; color:var(--ink)}
   .subhead{font-weight:700; margin:4px 0 8px; color:var(--ink)}
   .fieldset{border:1px dashed var(--border); border-radius:12px; padding:12px; margin-top:8px}
 
@@ -70,12 +61,12 @@
 <body>
 <header>
   <h1>Automated Composite Builder</h1>
-  <p>Tiles forced to <strong>4×5</strong>. Composite sizes include <strong>10×8 in</strong> @ <strong>300 DPI</strong> (3000×2400 px). Uploads → Settings → Generate.</p>
+  <p>Tiles forced to <strong>4×5</strong>. 10×8 @ 300 DPI by default. Uploads → Settings → Generate.</p>
 </header>
 
 <div class="wrap">
 
-  <!-- 1) UPLOADS -->
+  <!-- 1) Uploads -->
   <section class="card" id="uploads">
     <h2>1) Uploads</h2>
     <div class="body grid-2">
@@ -105,7 +96,7 @@
     </div>
   </section>
 
-  <!-- 2) SETTINGS -->
+  <!-- 2) Settings -->
   <section class="card">
     <h2>2) Settings</h2>
     <div class="body">
@@ -154,18 +145,11 @@
             <div style="flex:1"><label>Rows (0 = Auto)<input id="rows" type="number" value="0" min="0" step="1"></label></div>
           </div>
           <div class="row">
-            <div style="flex:1"><label>Background color (fallback)<input id="bgColor" type="color" value="#ffffff"/></label></div>
             <div style="flex:1"><label>Gutter (px)<input id="gutter" type="number" value="24" min="0"></label></div>
+            <div style="flex:1"><label>Margins (px)<input id="margin" type="number" value="80" min="0"></label></div>
           </div>
           <div class="row">
-            <div style="flex:1"><label>Margins (px)<input id="margin" type="number" value="80" min="0"></label></div>
-            <div style="flex:1"><label>Show names under photos
-              <select id="showNames">
-                <option value="auto" selected>Auto (on if any names)</option>
-                <option value="on">On</option>
-                <option value="off">Off</option>
-              </select></label>
-            </div>
+            <div style="flex:1"><label>Background color (fallback)<input id="bgColor" type="color" value="#ffffff"/></label></div>
           </div>
         </div>
       </div>
@@ -184,7 +168,14 @@
             <div class="small" style="margin-top:6px">Headers accepted: <code>first,last</code> (or <code>name</code>), optional <code>filename</code>, <code>grade</code>, <code>teacher</code>.</div>
           </div>
 
+          <div><label>Show names
+            <select id="showNames">
+              <option value="auto" selected>Auto (on if names exist)</option>
+              <option value="on">On</option>
+              <option value="off">Off</option>
+            </select></label></div>
           <div><label>Name font size (px)<input id="nameSize" type="number" value="36" min="14" step="2"></label></div>
+          <div><label>Name color<input id="nameColor" type="color" value="#000000"></label></div>
 
           <div><label>Sort 1
             <select id="sort1Key">
@@ -231,7 +222,7 @@
     </div>
   </section>
 
-  <!-- 3) OUTPUT -->
+  <!-- 3) Output -->
   <section class="card">
     <h2>3) Output & Export</h2>
     <div class="body">
@@ -256,7 +247,6 @@
   const marginEl = document.getElementById('margin');
   const gutterEl = document.getElementById('gutter');
   const bgColorEl = document.getElementById('bgColor');
-  const showNamesEl = document.getElementById('showNames');
 
   const titleSizeEl = document.getElementById('titleSize');
   const schoolEl = document.getElementById('school');
@@ -266,7 +256,9 @@
   const logoName = document.getElementById('logoName');
   const logoSizeEl = document.getElementById('logoSize');
 
+  const showNamesEl = document.getElementById('showNames');
   const nameSizeEl = document.getElementById('nameSize');
+  const nameColorEl = document.getElementById('nameColor');
 
   const csvPick = document.getElementById('csvPick');
   const csvStatus = document.getElementById('csvStatus');
@@ -298,7 +290,7 @@
   function setPreset(){ const [w,h]=preset.value.split('x').map(n=>parseInt(n,10)); cw.value=w; ch.value=h; }
   preset.addEventListener('change', setPreset);
 
-  // Dropzone visuals and handlers
+  // Dropzone
   ['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); e.stopPropagation(); drop.classList.add('drag'); }));
   ['dragleave','drop'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); e.stopPropagation(); drop.classList.remove('drag'); }));
   drop.addEventListener('drop', e => handlePhotoFiles(e.dataTransfer.files));
@@ -324,7 +316,7 @@
     });
   }
 
-  // Thumbnails with drag-to-reorder
+  // Thumbnails (drag to reorder)
   function refreshThumbs(){
     thumbs.innerHTML = '';
     images.forEach((o,i)=>{
@@ -356,7 +348,7 @@
   csvPick.addEventListener('change', async (e)=>{
     const file = e.target.files?.[0];
     if(!file){ csvPick.value=''; return; }
-    const text = await file.text();
+    let text = await file.text();
     namesCSV = parseCSV(text);
     mapNamesToImages();
     sortImages();
@@ -368,8 +360,11 @@
   applySort.addEventListener('click', ()=>{ sortImages(); refreshThumbs(); });
 
   function norm(s){ return (s??'').toString().trim(); }
-  function normKey(s){ return norm(s).toLowerCase().replace(/\s+/g,' ').replace(/\s/g,'_'); }
+  function stripBOM(s){ return s.replace(/^\uFEFF/, ''); } // key fix
+  function normKey(s){ return stripBOM(norm(s)).toLowerCase().replace(/\s+/g,' ').replace(/\s/g,'_'); }
+
   function parseCSV(text){
+    text = stripBOM(text); // handle UTF-8 BOM at file start
     const rows=[]; let i=0, cell='', row=[], inQ=false;
     const pushCell=()=>{ row.push(cell); cell=''; };
     const pushRow=()=>{ rows.push(row); row=[]; };
@@ -413,6 +408,11 @@
     });
   }
 
+  function nameFromFile(fileName){
+    const base = (fileName||'').replace(/\.[^.]+$/,'').replace(/[_\-\.]+/g,' ').replace(/\s+/g,' ').trim();
+    return base.replace(/\b\w/g, m=>m.toUpperCase()); // Title Case
+  }
+
   function mapNamesToImages(){
     if(!namesCSV.length){ lastMatchCount=0; return; }
     const byFile=new Map(); namesCSV.forEach(n=>{ if(n.filename) byFile.set(n.filename.toLowerCase(), n); });
@@ -424,6 +424,7 @@
         matched++;
       }
     });
+    // sequential fill for those without a filename column
     const seq = namesCSV.filter(n=>!n.filename);
     let s=0;
     images.forEach(img=>{
@@ -432,6 +433,8 @@
         matched++;
       }
     });
+    // final safety: if still no name, derive from filename
+    images.forEach(img=>{ if(!img.name || !img.name.trim()) img.name = nameFromFile(img.fileName); });
     lastMatchCount=matched;
   }
 
@@ -536,6 +539,7 @@
     const headerText = buildHeaderText();
     const headerSize = Math.max(10, parseInt(titleSizeEl.value,10));
     const namePx = Math.max(12, parseInt(nameSizeEl.value,10) || 36);
+    const nameColor = nameColorEl.value || '#000000';
     const logoH = Math.max(20, parseInt(logoSizeEl.value,10));
 
     const anyNames = images.some(o => (o.name && o.name.trim()) || o.first || o.last);
@@ -591,6 +595,9 @@
       ctx.font = `600 ${namePx}px Inter, Arial, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
+
+      // choose a contrasting stroke (light over dark text, dark over light text)
+      const stroke = getLuma(nameColor) < 128 ? 'rgba(255,255,255,.85)' : 'rgba(0,0,0,.65)';
       const textStroke = Math.max(2, Math.ceil(namePx/16));
 
       for (const cell of cells){
@@ -604,9 +611,8 @@
           if (name){
             const tx = x + cell.tileW/2;
             const ty = y + cell.tileH + Math.max(4, Math.round(labelPad*0.18));
-            // Stroke + fill for contrast on light/dark BGs
-            ctx.lineWidth = textStroke; ctx.strokeStyle='rgba(0,0,0,.6)'; ctx.strokeText(name, tx, ty);
-            ctx.fillStyle = '#ffffff'; ctx.fillText(name, tx, ty);
+            ctx.lineWidth = textStroke; ctx.strokeStyle = stroke; ctx.strokeText(name, tx, ty);
+            ctx.fillStyle = nameColor; ctx.fillText(name, tx, ty);
           }
         }
       }
@@ -622,6 +628,12 @@
     }
   }
 
+  function getLuma(hex){
+    const h = hex.replace('#','');
+    const r=parseInt(h.substring(0,2),16), g=parseInt(h.substring(2,4),16), b=parseInt(h.substring(4,6),16);
+    return 0.2126*r + 0.7152*g + 0.0722*b;
+  }
+
   function buildHeaderText(){
     const school = (schoolEl.value||'').trim();
     const grade  = (gradeEl.value||'').trim();
@@ -630,11 +642,8 @@
     return bits.join(' • ');
   }
 
-  // Layout/pagination
   function paginateTiles(count, wantedCols, wantedRows, contentW, contentH, G, labelPad){
-    const ratio = 4/5;
-    const autoC = wantedCols===0, autoR = wantedRows===0;
-
+    const ratio = 4/5, autoC = wantedCols===0, autoR = wantedRows===0;
     function score(c, r){
       let tileW = (contentW - G*(c-1)) / c;
       let tileH = tileW / ratio;
@@ -646,7 +655,6 @@
       }
       return {tileW, tileH, cellH, perPage:c*r};
     }
-
     let best=null, bestC=1, bestR=1;
     if (!autoC && !autoR){ bestC=Math.max(1,wantedCols); bestR=Math.max(1,wantedRows); best=score(bestC,bestR); }
     else{
@@ -662,12 +670,10 @@
         }
       }
     }
-
     if(!best || best.tileW<=0 || best.tileH<=0) return {pageCount:0, tilesPerPage:0, pagePlacements:[]};
     const perPage = Math.max(1, best.perPage);
     const pageCount = Math.ceil(count / perPage);
     const placements = [];
-
     for(let p=0; p<pageCount; p++){
       const start=p*perPage, end=Math.min(count,start+perPage), cells=[];
       for(let i=start; i<end; i++){
@@ -680,7 +686,6 @@
     return {pageCount, tilesPerPage:perPage, pagePlacements:placements};
   }
 
-  // Drawing helpers
   function drawCropped4x5(ctx, img, dx, dy, dw, dh){
     const target=4/5, iw=img.naturalWidth||img.width, ih=img.naturalHeight||img.height, r=iw/ih;
     let sx,sy,sw,sh;
