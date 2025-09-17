@@ -34,7 +34,6 @@
   .thumb img{width:100%; height:100%; object-fit:cover}
   .thumb .label{position:absolute; left:0; right:0; bottom:0; background:linear-gradient(180deg,rgba(0,0,0,0) 0,rgba(0,0,0,.55) 85%); color:#fff; font-size:.78rem; padding:6px 8px; text-shadow:0 1px 2px rgba(0,0,0,.5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .thumb .idx{position:absolute; top:6px; left:6px; font-size:.72rem; background:rgba(0,0,0,.55); color:#fff; padding:2px 6px; border-radius:999px}
-  /* NEW: per-image remove button */
   .thumb .remove{position:absolute; right:6px; top:6px; width:24px; height:24px; border-radius:999px; display:flex; align-items:center; justify-content:center; font-weight:700; background:rgba(0,0,0,.55); color:#fff; border:1px solid rgba(255,255,255,.6); opacity:0; transition:.15s; cursor:pointer}
   .thumb:hover .remove{opacity:1}
 
@@ -113,7 +112,6 @@
           <div><label>Year<input id="year" type="text" placeholder="e.g., 2025–2026"></label></div>
           <div><label>Title font size (px)<input id="titleSize" type="number" value="72" min="20" step="2"></label></div>
 
-          <!-- NEW: title lines + placement -->
           <div><label>Lines
             <select id="titleLines">
               <option value="1" selected>1 line</option>
@@ -139,7 +137,6 @@
           </div>
           <div><label>Logo height (px)<input id="logoSize" type="number" value="140" min="40"></label></div>
 
-          <!-- NEW: studio credit -->
           <div style="grid-column:1/-1; margin-top:6px; border-top:1px dashed var(--border); padding-top:10px">
             <div class="subhead" style="margin:0 0 6px">Studio Credit (optional)</div>
             <div class="controls" style="grid-template-columns:repeat(2,1fr); gap:12px">
@@ -239,7 +236,11 @@
           <div><label>Dir
             <select id="sort3Dir"><option value="asc">A→Z</option><option value="desc">Z→A</option></select></label></div>
 
-          <div style="grid-column:1/-1"><button id="applySort" class="btn">Apply Sort</button></div>
+          <div style="grid-column:1/-1; display:flex; gap:8px; flex-wrap:wrap; margin-top:2px">
+            <button id="applySort" class="btn">Apply Sort</button>
+            <button id="presetSortCsv" class="btn">Preset: CSV (Grade → Last → First)</button>
+            <button id="presetSortCsvOrder" class="btn">Preset: Use CSV Row Order</button>
+          </div>
         </div>
       </div>
 
@@ -302,6 +303,8 @@
   const sort3Key = document.getElementById('sort3Key');
   const sort3Dir = document.getElementById('sort3Dir');
   const applySortBtn = document.getElementById('applySort');
+  const presetSortCsvBtn = document.getElementById('presetSortCsv');
+  const presetSortCsvOrderBtn = document.getElementById('presetSortCsvOrder');
 
   const bgPick = document.getElementById('bgPick');
   const bgList = document.getElementById('bgList');
@@ -319,7 +322,7 @@
   let bgIndex = -1;
   let lastMatchCount = 0;
 
-  // ----- Preset
+  // ----- Preset size
   function setPreset(){ const [w,h]=preset.value.split('x').map(n=>parseInt(n,10)); cw.value=w; ch.value=h; }
   preset.addEventListener('change', setPreset);
 
@@ -334,7 +337,7 @@
     if(!files.length) return;
     const loaded = await Promise.all(files.map(loadImageFile));
     images.push(...loaded);
-    images.forEach((o,i)=>o._order=i); // initial order
+    images.forEach((o,i)=>o._order=i);
     mapNamesToImages();
     refreshThumbs();
     btnGen.disabled = images.length === 0;
@@ -350,7 +353,7 @@
     });
   }
 
-  // ----- Thumbs (drag to reorder + NEW: remove)
+  // ----- Thumbnails (drag to reorder + remove)
   function refreshThumbs(){
     thumbs.innerHTML = '';
     images.forEach((o,i)=>{
@@ -361,7 +364,6 @@
       label.textContent = (o.name && o.name.trim()) || o.fileName || `Image ${i+1}`;
       d.appendChild(label);
 
-      // remove button
       const rm = document.createElement('button'); rm.className='remove'; rm.type='button'; rm.textContent='×';
       rm.addEventListener('click', (ev)=>{ ev.stopPropagation(); URL.revokeObjectURL(images[i]?.url); images.splice(i,1); refreshThumbs(); btnGen.disabled = images.length===0; updateCsvStatus(); });
       d.appendChild(rm);
@@ -385,7 +387,7 @@
     images.forEach((o,i)=>o._order=i);
   }
 
-  // ----- CSV + sorting (unchanged from your version)
+  // ----- CSV + sorting
   csvPick.addEventListener('change', async (e)=>{
     const file = e.target.files?.[0];
     if(!file){ csvPick.value=''; return; }
@@ -402,6 +404,18 @@
   const sortEls = [sort1Key, sort1Dir, sort2Key, sort2Dir, sort3Key, sort3Dir];
   sortEls.forEach(el => el.addEventListener('change', ()=>{ sortImages(); refreshThumbs(); }));
   applySortBtn.addEventListener('click', ()=>{ sortImages(); refreshThumbs(); });
+
+  presetSortCsvBtn.addEventListener('click', ()=>{
+    sort1Key.value='grade'; sort1Dir.value='asc';
+    sort2Key.value='last';  sort2Dir.value='asc';
+    sort3Key.value='first'; sort3Dir.value='asc';
+    sortImages(); refreshThumbs();
+  });
+  presetSortCsvOrderBtn.addEventListener('click', ()=>{
+    images.sort((a,b)=>(a._csvIndex ?? Number.POSITIVE_INFINITY) - (b._csvIndex ?? Number.POSITIVE_INFINITY));
+    images.forEach((o,i)=>o._order=i);
+    refreshThumbs();
+  });
 
   function norm(s){ return (s??'').toString().trim(); }
   function stripBOM(s){ return s.replace(/^\uFEFF/,''); }
@@ -431,10 +445,10 @@
     const data = rows.slice(1).filter(r=>r.some(c=>norm(c)!==''));
 
     const idx = (aliases)=>{ for(const a of aliases){ const p=headers.indexOf(normKey(a)); if(p>-1) return p; } return -1; };
-    const iFirst = idx(['first','first_name','first name']);
-    const iLast  = idx(['last','last_name','last name','surname']);
+    const iFirst = idx(['first','first_name','first name','firstname','given']);
+    const iLast  = idx(['last','last_name','last name','lastname','surname','family']);
     const iName  = idx(['name','student','student_name','student name','full_name','full name']);
-    const iFile  = idx(['filename','file','photo','image','image_name','image name']);
+    const iFile  = idx(['filename','file','photo','image','image_name','image name','imagename']);
     const iGrade = idx(['grade','class','grade_level','grade level']);
     const iTeach = idx(['teacher','homeroom','advisor','instructor']);
 
@@ -567,8 +581,8 @@
         }
         if (cmp !== 0) return dir === 'desc' ? -cmp : cmp;
       }
-      if (a._csvIndex !== b._csvIndex) return a._csvIndex - b._csvIndex;
-      return a._order - b._order;
+      if (a._csvIndex !== b._csvIndex) return a._csvIndex - b._csvIndex; // CSV row order as tie-breaker
+      return a._order - b._order; // then manual drag order
     });
   }
 
@@ -658,10 +672,10 @@
     const showNames = (showNamesEl.value==='on') || (showNamesEl.value==='auto' && anyNames);
     const labelPad = showNames ? Math.ceil(namePx * 1.35) : 0;
 
-    // Content area (inside margins), plus optional header or center band
+    // Content area
     let contentX = M, contentY = M, contentW = W - 2*M, contentH = H - 2*M;
 
-    // Top header
+    // Top header padding
     let topPad = 0;
     if (titlePlacement === 'top' && headerTexts.length){
       const textBlockH = lineHeight * headerTexts.length;
@@ -670,17 +684,17 @@
       contentY += topPad; contentH -= topPad;
     }
 
-    // Center band
+    // Center band gap (title in the middle)
     let gapStart = 0, gapH = 0, gapAbsY = 0;
     if (titlePlacement === 'center' && headerTexts.length){
-      gapH = lineHeight * headerTexts.length + 24;
-      gapStart = Math.max(0, Math.floor((contentH - gapH)/2)); // relative to contentY
+      gapH = lineHeight * headerTexts.length + 24; // space reserved for the title
+      gapStart = Math.max(0, Math.floor((contentH - gapH)/2));
       gapAbsY = contentY + gapStart;
     }
 
     if (contentW<=0 || contentH<=0){ alert('Canvas too small for chosen margins/title.'); return; }
 
-    // Pagination with optional gap for a center title band
+    // Layout with optional gap
     const pages = paginateTiles(images.length, wantedCols, wantedRows, contentW, contentH, G, labelPad, gapStart, gapH);
     if (pages.tilesPerPage === 0){ alert('Zero tiles per page with current settings.'); return; }
 
@@ -696,7 +710,7 @@
       ctx.fillStyle = bgColor; ctx.fillRect(0,0,W,H);
       if (bgIndex>=0 && backgrounds[bgIndex]) drawCover(ctx, backgrounds[bgIndex].img, 0,0,W,H);
 
-      // Logo (top-left area for both modes)
+      // Logo (top area)
       if (logo){
         const scale = logoH / (logo.h||logo.img.naturalHeight||logo.img.height);
         const w = (logo.w||logo.img.naturalWidth||logo.img.width) * scale;
@@ -704,7 +718,7 @@
         ctx.drawImage(logo.img, M, yBase, w, logoH);
       }
 
-      // Title text
+      // Title text (top or center band)
       if (headerTexts.length){
         ctx.save();
         ctx.textAlign = 'center';
@@ -745,8 +759,7 @@
       for (const cell of cells){
         const imgObj = images[cell.index]; if(!imgObj) continue;
         const x = contentX + cell.x;
-        // Push down rows after the gap (center-title mode)
-        const y = contentY + (cell.y < gapStart ? cell.y : cell.y + gapH);
+        const y = contentY + (cell.y < gapStart ? cell.y : cell.y + gapH); // push rows beneath the band
 
         drawCropped4x5(ctx, imgObj.img, x, y, cell.tileW, cell.tileH);
 
@@ -793,7 +806,7 @@
     return 0.2126*r + 0.7152*g + 0.0722*b;
   }
 
-  // Build 1–3 title lines
+  // Build 1–3 title lines exactly as requested
   function buildTitleLines(nLines){
     const school = (schoolEl.value||'').trim();
     const grade  = (gradeEl.value||'').trim();
@@ -815,7 +828,7 @@
     return lines;
   }
 
-  // Pagination with optional vertical gap (for center title)
+  // Pagination with optional vertical gap for the center band
   function paginateTiles(count, wantedCols, wantedRows, contentW, contentH, G, labelPad, gapStart=0, gapH=0){
     const ratio = 4/5;
     const autoC = wantedCols===0, autoR = wantedRows===0;
@@ -832,7 +845,7 @@
       return {tileW, tileH, cellH, perPage:c*r};
     }
 
-    const effectiveH = contentH - gapH;
+    const effectiveH = contentH - gapH; // exclude the center band
     let best=null, bestC=1, bestR=1;
     if (!autoC && !autoR){ bestC=Math.max(1,wantedCols); bestR=Math.max(1,wantedRows); best=score(bestC,bestR,effectiveH); }
     else{
@@ -859,7 +872,7 @@
       for(let i=start; i<end; i++){
         const k=i-start, r=Math.floor(k/bestC), c=k%bestC;
         const x=c*(best.tileW+G);
-        const y=r*(best.cellH+G); // relative to top of content area (gap handled at draw time)
+        const y=r*(best.cellH+G); // relative to top of content area; final shift applied when drawing
         cells.push({x,y,tileW:best.tileW,tileH:best.tileH,cellH:best.cellH,index:i});
       }
       placements.push(cells);
@@ -867,7 +880,7 @@
     return {pageCount, tilesPerPage:perPage, pagePlacements:placements};
   }
 
-  // Draw helpers
+  // Drawing helpers
   function drawCropped4x5(ctx, img, dx, dy, dw, dh){
     const target=4/5, iw=img.naturalWidth||img.width, ih=img.naturalHeight||img.height, r=iw/ih;
     let sx,sy,sw,sh;
