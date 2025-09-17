@@ -125,6 +125,9 @@
               <option value="center">Center Band</option>
             </select></label>
           </div>
+          <div><label>Band padding (px)
+            <input id="bandPad" type="number" value="36" min="0" step="2">
+          </label></div>
 
           <div>
             <label>Logo (optional)
@@ -281,6 +284,7 @@
   const titleLinesEl = document.getElementById('titleLines');
   const titlePosEl   = document.getElementById('titlePos');
   const titleSizeEl  = document.getElementById('titleSize');
+  const bandPadEl    = document.getElementById('bandPad');
   const schoolEl = document.getElementById('school');
   const gradeEl  = document.getElementById('grade');
   const yearEl   = document.getElementById('year');
@@ -581,8 +585,8 @@
         }
         if (cmp !== 0) return dir === 'desc' ? -cmp : cmp;
       }
-      if (a._csvIndex !== b._csvIndex) return a._csvIndex - b._csvIndex; // CSV row order as tie-breaker
-      return a._order - b._order; // then manual drag order
+      if (a._csvIndex !== b._csvIndex) return a._csvIndex - b._csvIndex;
+      return a._order - b._order;
     });
   }
 
@@ -661,6 +665,7 @@
     const titlePx = Math.max(10, parseInt(titleSizeEl.value,10));
     const titleLines = Math.max(1, Math.min(3, parseInt(titleLinesEl.value,10)));
     const titlePlacement = titlePosEl.value; // 'top' | 'center'
+    const bandPad = Math.max(0, parseInt(bandPadEl.value,10));
     const lineHeight = Math.ceil(titlePx * 1.12);
 
     const headerTexts = buildTitleLines(titleLines);
@@ -689,7 +694,8 @@
     // Center band metrics
     let bandH = 0;
     if (titlePlacement === 'center' && headerTexts.length){
-      bandH = lineHeight * headerTexts.length + 24; // reserved gap height
+      const textBlockH = lineHeight * headerTexts.length;
+      bandH = textBlockH + 2*bandPad; // reserve text plus clear gap above/below
     }
 
     // Layout (center-aware)
@@ -702,9 +708,7 @@
     const pageCount = layout.pageCount;
     const placements = layout.pagePlacements;
     const baseYOffset = layout.baseYOffset;            // centering offset inside content
-    const bandTopWithinContent = layout.bandTopWithin; // y (relative to contentY) where the band starts
-
-    // Absolute band Y for drawing title lines
+    const bandTopWithinContent = layout.bandTopWithin; // y (relative to content top) where the band starts
     const bandAbsY = contentY + baseYOffset + bandTopWithinContent;
 
     for(let p=0; p<pageCount; p++){
@@ -745,7 +749,7 @@
         } else {
           // center band
           const textBlockH = Math.ceil(lineHeight * headerTexts.length);
-          let y = bandAbsY + Math.max(0,(bandH - textBlockH)/2);
+          let y = bandAbsY + bandPad + Math.max(0,(bandH - 2*bandPad - textBlockH)/2);
           headerTexts.forEach(line=>{
             ctx.strokeText(line, W/2, y);
             ctx.fillText(line, W/2, y);
@@ -766,7 +770,7 @@
       for (const cell of cells){
         const imgObj = images[cell.index]; if(!imgObj) continue;
         const x = contentX + cell.x;
-        const y = contentY + baseYOffset + cell.y;
+        const y = contentY + baseYOffset + cell.y; // y is relative to content top
 
         drawCropped4x5(ctx, imgObj.img, x, y, cell.tileW, cell.tileH);
 
@@ -782,11 +786,10 @@
       }
 
       // Studio credit
-      const studio = (studioEl.value||'').trim();
       if (studio){
         ctx.save();
         ctx.textAlign='center'; ctx.textBaseline='alphabetic';
-        ctx.font = `600 ${Math.max(10, parseInt(studioSizeEl.value,10))}px Inter, Arial, sans-serif`;
+        ctx.font = `600 ${studioPx}px Inter, Arial, sans-serif`;
         ctx.lineWidth = 1.5;
         ctx.strokeStyle = 'rgba(0,0,0,.6)';
         ctx.fillStyle = '#ffffff';
@@ -838,14 +841,14 @@
 
   /**
    * Center-aware pagination: evenly splits rows above/below a reserved band.
-   * Returns absolute y positions (relative to top of the content area).
+   * Returns y positions RELATIVE to the content's top (no baseYOffset included).
    */
   function paginateTilesCenterAware(count, wantedCols, wantedRows, contentW, contentH, G, labelPad, bandH){
     const ratio = 4/5;
     const autoC = wantedCols===0, autoR = wantedRows===0;
 
-    // Effective height excludes the band itself.
     const effH = contentH - bandH;
+    if (effH <= 0) return {pageCount:0, tilesPerPage:0, pagePlacements:[], baseYOffset:0, bandTopWithin:0};
 
     function score(c, r){
       let tileW = (contentW - G*(c-1)) / c;
@@ -875,19 +878,17 @@
       }
     }
 
-    if(!best || best.tileW<=0 || best.tileH<=0) return {pageCount:0, tilesPerPage:0, pagePlacements:[]};
+    if(!best || best.tileW<=0 || best.tileH<=0) return {pageCount:0, tilesPerPage:0, pagePlacements:[], baseYOffset:0, bandTopWithin:0};
 
-    // Split rows around the band
     const rowsTop = Math.floor(bestR/2);
     const rowsBottom = bestR - rowsTop;
 
     const topH = rowsTop * best.cellH + Math.max(0, rowsTop-1) * G;
     const bottomH = rowsBottom * best.cellH + Math.max(0, rowsBottom-1) * G;
 
-    // Center both blocks + band inside the content area
     const usedH = topH + bandH + bottomH;
     const baseYOffset = Math.max(0, Math.floor((contentH - usedH) / 2));
-    const bandTopWithin = topH; // relative to baseYOffset
+    const bandTopWithin = topH; // relative to content top (before adding baseYOffset)
 
     const perPage = Math.max(1, bestC*bestR);
     const pageCount = Math.ceil(count / perPage);
@@ -898,20 +899,19 @@
       for(let i=start; i<end; i++){
         const k=i-start, r=Math.floor(k/bestC), c=k%bestC;
         const x=c*(best.tileW+G);
-        let y;
+        let yRel;
         if (bandH>0){
           if (r < rowsTop){
-            y = baseYOffset + r*(best.cellH+G);
+            yRel = r*(best.cellH+G);
           } else {
-            y = baseYOffset + topH + bandH + (r-rowsTop)*(best.cellH+G);
+            yRel = topH + bandH + (r-rowsTop)*(best.cellH+G);
           }
         } else {
-          // No band: just top-aligned with vertical centering
           const gridH = bestR*best.cellH + Math.max(0,bestR-1)*G;
           const centerOffset = Math.max(0, Math.floor((contentH - gridH)/2));
-          y = centerOffset + r*(best.cellH+G);
+          yRel = centerOffset + r*(best.cellH+G);
         }
-        cells.push({x,y,tileW:best.tileW,tileH:best.tileH,cellH:best.cellH,index:i});
+        cells.push({x, y: yRel, tileW:best.tileW, tileH:best.tileH, cellH:best.cellH, index:i});
       }
       placements.push(cells);
     }
@@ -921,7 +921,7 @@
       tilesPerPage: perPage,
       pagePlacements: placements,
       baseYOffset,
-      bandTopWithin // relative to baseYOffset
+      bandTopWithin
     };
   }
 
