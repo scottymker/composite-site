@@ -279,8 +279,8 @@
   const downloads = document.getElementById('downloads');
 
   // ----- State
-  let images = [];      // [{img,url,fileName, first?,last?,name?,grade?,teacher?, _order?}]
-  let namesCSV = [];    // [{first,last,name,filename,grade,teacher}]
+  let images = [];      // [{img,url,fileName, first?,last?,name?,grade?,teacher?, _order?, _csv?, _csvIndex?}]
+  let namesCSV = [];    // [{first,last,name,filename,grade,teacher,__row}]
   let logo = null;      // {img,w,h,url}
   let backgrounds = []; // [{img,w,h,label,url}]
   let bgIndex = -1;
@@ -398,10 +398,10 @@
     const iLast  = idx(['last','last_name','last name','surname']);
     const iName  = idx(['name','student','student_name','student name','full_name','full name']);
     const iFile  = idx(['filename','file','photo','image','image_name','image name']);
-    const iGrade = idx(['grade','class']);
-    const iTeach = idx(['teacher','homeroom','advisor']);
+    const iGrade = idx(['grade','class','grade_level','grade level']);
+    const iTeach = idx(['teacher','homeroom','advisor','instructor']);
 
-    return data.map(r=>{
+    return data.map((r, rowIdx)=>{
       const first = iFirst>-1 ? norm(r[iFirst]) : '';
       const last  = iLast>-1  ? norm(r[iLast])  : '';
       let name    = iName>-1  ? norm(r[iName])  : '';
@@ -410,7 +410,8 @@
         first,last,name,
         filename: iFile>-1 ? norm(r[iFile]).toLowerCase() : '',
         grade:    iGrade>-1? norm(r[iGrade]) : '',
-        teacher:  iTeach>-1? norm(r[iTeach]) : ''
+        teacher:  iTeach>-1? norm(r[iTeach]) : '',
+        __row: rowIdx // preserve CSV row order for stable tie-breaking
       };
     });
   }
@@ -424,29 +425,48 @@
     if(!namesCSV.length){ lastMatchCount=0; return; }
     const byFile=new Map(); namesCSV.forEach(n=>{ if(n.filename) byFile.set(n.filename.toLowerCase(), n); });
     let matched=0;
+
+    // 1) filename-based matches
     images.forEach(img=>{
       const m = byFile.get((img.fileName||'').toLowerCase());
       if(m){
-        Object.assign(img, {first:m.first,last:m.last,name:m.name||`${m.first} ${m.last}`.trim(),grade:m.grade,teacher:m.teacher});
+        Object.assign(img, {
+          first:m.first,last:m.last,name:m.name||`${m.first} ${m.last}`.trim(),
+          grade:m.grade,teacher:m.teacher,
+          _csv:m,_csvIndex:m.__row
+        });
         matched++;
       }
     });
+
+    // 2) sequential fill for those without filename
     const seq = namesCSV.filter(n=>!n.filename);
     let s=0;
     images.forEach(img=>{
-      if(!img.name && s<seq.length){
-        const n = seq[s++]; Object.assign(img, {first:n.first,last:n.last,name:n.name||`${n.first} ${n.last}`.trim(),grade:n.grade,teacher:n.teacher});
+      if(!img._csv && s<seq.length){
+        const n = seq[s++];
+        Object.assign(img, {
+          first:n.first,last:n.last,name:n.name||`${n.first} ${n.last}`.trim(),
+          grade:n.grade,teacher:n.teacher,
+          _csv:n,_csvIndex:n.__row
+        });
         matched++;
       }
     });
-    images.forEach(img=>{ if(!img.name || !img.name.trim()) img.name = nameFromFile(img.fileName); });
+
+    // 3) final safety: if still no name, derive from filename
+    images.forEach(img=>{
+      if(!img.name || !img.name.trim()) img.name = nameFromFile(img.fileName);
+      // if no CSV, mark csvIndex as +inf so CSV-backed rows win ties
+      if(img._csv == null) img._csvIndex = Number.POSITIVE_INFINITY;
+    });
+
     lastMatchCount=matched;
   }
 
   function updateCsvStatus(justLoaded=false){
     if(!namesCSV.length){ csvStatus.textContent='No CSV loaded.'; return; }
-    csvStatus.textContent = `CSV loaded: ${namesCSV.length} rows • matched ${lastMatchCount} of ${images.length} photos` +
-      (justLoaded?' • Names will appear under photos when generating.':'');
+    csvStatus.textContent = `CSV loaded: ${namesCSV.length} rows • matched ${lastMatchCount} of ${images.length} photos • Sorting uses CSV fields`;
   }
 
   function ensureShowNamesAuto(){
@@ -490,6 +510,16 @@
     return coll.compare(a||'', b||'');
   }
 
+  // Get value for sort from CSV first, then photo fields
+  function getSortVal(img, key){
+    const src = img._csv || img;
+    if (key === 'grade')   return src.grade || img.grade || '';
+    if (key === 'teacher') return src.teacher || img.teacher || '';
+    if (key === 'last')    return src.last || img.last || '';
+    if (key === 'first')   return src.first || img.first || '';
+    return '';
+  }
+
   function sortImages(){
     const keys = [
       [sort1Key.value, sort1Dir.value],
@@ -499,21 +529,23 @@
 
     if (!keys.length) return;
 
-    // stable baseline = current thumbnail order
-    images.forEach((o,i)=>{ o._order = i; });
+    // stable baselines
+    images.forEach((o,i)=>{ o._order = i; if (typeof o._csvIndex !== 'number') o._csvIndex = Number.POSITIVE_INFINITY; });
 
     images.sort((a, b) => {
       for (const [k, dir] of keys) {
         let cmp = 0;
         if (k === 'grade') {
-          const ga = gradeRank(a.grade), gb = gradeRank(b.grade);
+          const ga = gradeRank(getSortVal(a,'grade')), gb = gradeRank(getSortVal(b,'grade'));
           cmp = ga.rank === gb.rank ? cmpText(ga.norm, gb.norm) : (ga.rank - gb.rank);
-        } else if (k === 'teacher') cmp = cmpText(a.teacher, b.teacher);
-        else if (k === 'last')    cmp = cmpText(a.last, b.last);
-        else if (k === 'first')   cmp = cmpText(a.first, b.first);
+        } else {
+          cmp = cmpText(getSortVal(a,k), getSortVal(b,k));
+        }
         if (cmp !== 0) return dir === 'desc' ? -cmp : cmp;
       }
-      return a._order - b._order; // stable fallback
+      // Prefer CSV row order when all keys tie, then manual drag order
+      if (a._csvIndex !== b._csvIndex) return a._csvIndex - b._csvIndex;
+      return a._order - b._order;
     });
   }
 
