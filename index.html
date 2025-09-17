@@ -84,12 +84,12 @@
 
       <div>
         <div class="fieldset">
-          <div class="subhead">Backgrounds (optional)</div>
+          <div class="subhead">Backgrounds</div>
           <div class="row" style="justify-content:space-between; align-items:center">
-            <div class="small">Upload up to 10. First one auto-selects.</div>
+            <div class="small">Choose one of the 10 built-ins below. (Background&nbsp;1 is selected by default.)</div>
             <div>
-              <label for="bgPick" class="btn">Upload Backgrounds</label>
-              <input id="bgPick" type="file" accept="image/*" multiple>
+              <label for="bgCustomPick" class="btn" title="Upload a custom background">Upload Custom</label>
+              <input id="bgCustomPick" type="file" accept="image/*">
             </div>
           </div>
           <div id="bgList" class="bg-list" style="margin-top:10px"></div>
@@ -310,8 +310,8 @@
   const presetSortCsvBtn = document.getElementById('presetSortCsv');
   const presetSortCsvOrderBtn = document.getElementById('presetSortCsvOrder');
 
-  const bgPick = document.getElementById('bgPick');
   const bgList = document.getElementById('bgList');
+  const bgCustomPick = document.getElementById('bgCustomPick');
 
   const btnGen = document.getElementById('btnGen');
   const btnClear = document.getElementById('btnClear');
@@ -322,7 +322,7 @@
   let images = [];      // [{img,url,fileName, first?,last?,name?,grade?,teacher?, _order?, _csv?, _csvIndex?}]
   let namesCSV = [];    // [{first,last,name,filename,grade,teacher,__row}]
   let logo = null;      // {img,w,h,url}
-  let backgrounds = []; // [{img,w,h,label,url}]
+  let backgrounds = []; // [{img,w,h,label,url,isObjectUrl?:boolean}]
   let bgIndex = -1;
   let lastMatchCount = 0;
 
@@ -601,31 +601,43 @@
     logoPick.value=''; // reset
   });
 
-  // ----- Backgrounds
-  bgPick.addEventListener('change', e => { handleBgFiles(e.target.files); bgPick.value=''; });
-  async function handleBgFiles(fileList){
-    const files = Array.from(fileList).filter(f => f.type.startsWith('image/')).slice(0, 10 - backgrounds.length);
-    if(!files.length) return;
-    const loaded = await Promise.all(files.map(loadBlobAsImage));
-    loaded.forEach((o,i)=>{ o.label = `Background ${backgrounds.length + i + 1}`; });
-    backgrounds.push(...loaded);
-    if (bgIndex < 0 && backgrounds.length > 0) bgIndex = 0;
+  // ----- Backgrounds (built-in + optional custom)
+  async function initBackgrounds(){
+    // preload 10 built-ins (files must be alongside the HTML)
+    const files = Array.from({length:10}, (_,i)=>`Background${i+1}.jpg`);
+    const loaded = await Promise.all(files.map((src, i)=>loadSrcAsImage(src, `Background ${i+1}`)));
+    backgrounds = loaded;       // built-ins only
+    bgIndex = backgrounds.length ? 0 : -1;
     renderBgList();
   }
-  function loadBlobAsImage(file){
+  function loadSrcAsImage(src,label){
     return new Promise((resolve,reject)=>{
-      const url = URL.createObjectURL(file);
       const img = new Image();
-      img.onload = () => resolve({img, w:img.naturalWidth, h:img.naturalHeight, url});
+      img.onload = ()=> resolve({img, w:img.naturalWidth, h:img.naturalHeight, label, url:src, isObjectUrl:false});
       img.onerror = reject;
-      img.src = url;
+      img.src = src;
     });
   }
+
+  bgCustomPick.addEventListener('change', e => {
+    const file = e.target.files?.[0];
+    if(!file){ bgCustomPick.value=''; return; }
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = ()=>{
+      backgrounds.push({img, w:img.naturalWidth, h:img.naturalHeight, label:'Custom', url, isObjectUrl:true});
+      bgIndex = backgrounds.length - 1;
+      renderBgList();
+    };
+    img.src = url;
+    bgCustomPick.value='';
+  });
+
   function renderBgList(){
     bgList.innerHTML = '';
     backgrounds.forEach((b, i)=>{
       const card = document.createElement('div'); card.className = 'bg-card';
-      const img = document.createElement('img'); img.src=b.img.src; card.appendChild(img);
+      const img = document.createElement('img'); img.src=b.img.src; img.alt=b.label; card.appendChild(img);
       const choose = document.createElement('div'); choose.className='bg-choose' + (i===bgIndex?' active':'');
       const radio = document.createElement('input'); radio.type='radio'; radio.name='bgPickRadio';
       radio.checked = i===bgIndex; radio.addEventListener('change', ()=>{ bgIndex = i; renderBgList(); });
@@ -636,12 +648,13 @@
 
   // ----- Generate / Clear
   btnGen.addEventListener('click', onGenerate);
-  btnClear.addEventListener('click', ()=>{
+  btnClear.addEventListener('click', async ()=>{
+    // revoke only custom object URLs
+    backgrounds.forEach(b=>{ if(b.isObjectUrl && b.url) URL.revokeObjectURL(b.url); });
     images.forEach(o=> o.url && URL.revokeObjectURL(o.url));
-    backgrounds.forEach(b=> b.url && URL.revokeObjectURL(b.url));
-    images = []; namesCSV = []; logo = null; backgrounds = []; bgIndex = -1;
-    thumbs.innerHTML=''; bgList.innerHTML=''; output.innerHTML=''; downloads.innerHTML='';
+    images = []; namesCSV = []; logo = null; output.innerHTML=''; downloads.innerHTML=''; thumbs.innerHTML='';
     btnGen.disabled = true; lastMatchCount = 0; csvStatus.textContent='No CSV loaded.'; logoName.textContent='No file';
+    await initBackgrounds(); // restore built-ins
   });
   document.addEventListener('change', ()=>{ btnGen.disabled = images.length === 0; });
 
@@ -695,7 +708,7 @@
     let bandH = 0;
     if (titlePlacement === 'center' && headerTexts.length){
       const textBlockH = lineHeight * headerTexts.length;
-      bandH = textBlockH + 2*bandPad; // reserve text plus clear gap above/below
+      bandH = textBlockH + 2*bandPad;
     }
 
     // Layout (center-aware)
@@ -707,8 +720,8 @@
 
     const pageCount = layout.pageCount;
     const placements = layout.pagePlacements;
-    const baseYOffset = layout.baseYOffset;            // centering offset inside content
-    const bandTopWithinContent = layout.bandTopWithin; // y (relative to content top) where the band starts
+    const baseYOffset = layout.baseYOffset;
+    const bandTopWithinContent = layout.bandTopWithin;
     const bandAbsY = contentY + baseYOffset + bandTopWithinContent;
 
     for(let p=0; p<pageCount; p++){
@@ -728,7 +741,7 @@
         ctx.drawImage(logo.img, M, yBase, w, logoH);
       }
 
-      // Title text: top or center band
+      // Title text
       if (headerTexts.length){
         ctx.save();
         ctx.textAlign = 'center';
@@ -770,7 +783,7 @@
       for (const cell of cells){
         const imgObj = images[cell.index]; if(!imgObj) continue;
         const x = contentX + cell.x;
-        const y = contentY + baseYOffset + cell.y; // y is relative to content top
+        const y = contentY + baseYOffset + cell.y;
 
         drawCropped4x5(ctx, imgObj.img, x, y, cell.tileW, cell.tileH);
 
@@ -839,10 +852,7 @@
     return lines;
   }
 
-  /**
-   * Center-aware pagination: evenly splits rows above/below a reserved band.
-   * Returns y positions RELATIVE to the content's top (no baseYOffset included).
-   */
+  // Center-aware pagination (reserves a central band when needed)
   function paginateTilesCenterAware(count, wantedCols, wantedRows, contentW, contentH, G, labelPad, bandH){
     const ratio = 4/5;
     const autoC = wantedCols===0, autoR = wantedRows===0;
@@ -888,7 +898,7 @@
 
     const usedH = topH + bandH + bottomH;
     const baseYOffset = Math.max(0, Math.floor((contentH - usedH) / 2));
-    const bandTopWithin = topH; // relative to content top (before adding baseYOffset)
+    const bandTopWithin = topH;
 
     const perPage = Math.max(1, bestC*bestR);
     const pageCount = Math.ceil(count / perPage);
@@ -938,6 +948,9 @@
     const s=Math.max(w/iw,h/ih), dw=iw*s, dh=ih*s, dx=x+(w-dw)/2, dy=y+(h-dh)/2;
     ctx.drawImage(img, dx,dy,dw,dh);
   }
+
+  // Kick off: load built-in backgrounds
+  initBackgrounds();
 })();
 </script>
 </body>
