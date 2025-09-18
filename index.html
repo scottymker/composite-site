@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Automated Composite Builder — Made for School Photographers</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b1020; --ink:#e6edf3; --muted:#9aa4b2; --accent:#0ea5e9; --accent-2:#22d3ee;
+    --panel:#0f162b; --panel-2:#121b33; --border:#1e2a46; --radius:14px; --shadow:0 12px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0; background:
+    radial-gradient(1200px 700px at 75% -10%, rgba(34,211,238,.08), transparent 60%),
+    radial-gradient(1000px 600px at 10% -20%, rgba(14,165,233,.10), transparent 60%),
+    var(--bg);
+    color:var(--ink); font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,Helvetica,sans-serif}
+  a{color:inherit; text-decoration:none}
+  .wrap{max-width:1180px; margin:0 auto; padding:0 20px}
+  /* Nav */
+  .nav{position:sticky; top:0; z-index:50; backdrop-filter:saturate(160%) blur(8px);
+       background:linear-gradient(180deg,rgba(10,16,34,.75),rgba(10,16,34,.55)); border-bottom:1px solid var(--border)}
+  .navin{display:flex; align-items:center; justify-content:space-between; gap:18px; padding:14px 0}
+  .brand{display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:.2px}
+  .brand i{width:28px; height:28px; display:inline-block; border-radius:8px;
+           background:linear-gradient(135deg,var(--accent),var(--accent-2)); box-shadow:0 6px 18px rgba(14,165,233,.35)}
+  .navlinks{display:flex; gap:14px; align-items:center}
+  .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 14px; border-radius:12px;
+       border:1px solid #244165; background:#102036; color:#dce7f5; font-weight:600}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#00121a; border-color:transparent}
+  .btn.ghost{background:transparent}
+  .btn.small{padding:8px 12px; border-radius:10px; font-size:.95rem}
+  /* Hero */
+  .hero{padding:70px 0 40px}
+  .hero h1{font-size:clamp(28px,4.2vw,44px); line-height:1.12; margin:.2rem 0 .6rem; font-weight:800}
+  .hero p{color:var(--muted); font-size:clamp(16px,2.2vw,18px); margin:0 0 18px}
+  .hero .cta{display:flex; flex-wrap:wrap; gap:10px; margin-top:8px}
+  .hero .board{margin-top:26px; border:1px solid var(--border); border-radius:16px; overflow:hidden; background:rgba(18,27,51,.55); box-shadow:var(--shadow)}
+  .hero .board img{display:block; width:100%; height:auto}
+  /* Trust row */
+  .trust{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:18px 0 2px}
+  .trust .chip{border:1px solid var(--border); background:rgba(16,26,48,.6); padding:10px 12px; border-radius:12px; font-size:.95rem}
+  @media (max-width:860px){ .trust{grid-template-columns:repeat(2,1fr)} }
+  /* Sections */
+  section{padding:56px 0}
+  h2{font-size:clamp(22px,3vw,28px); margin:0 0 8px}
+  .muted{color:var(--muted)}
+  .grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:16px}
+  .card{border:1px solid var(--border); background:linear-gradient(180deg,rgba(18,28,54,.7),rgba(12,18,38,.7)); border-radius:16px; padding:18px; box-shadow:var(--shadow)}
+  .card h3{margin:.2rem 0 .3rem; font-size:1.05rem}
+  .card p{margin:.2rem 0 0; color:var(--muted); font-size:.95rem}
+  @media (max-width:980px){ .grid-3{grid-template-columns:1fr} }
+  /* Gallery */
+  .gallery{display:grid; grid-template-columns:repeat(3,1fr); gap:12px}
+  .gallery img{width:100%; height:auto; border-radius:12px; border:1px solid var(--border)}
+  @media (max-width:980px){ .gallery{grid-template-columns:1fr 1fr} }
+  @media (max-width:640px){ .gallery{grid-template-columns:1fr} }
+  /* Steps */
+  .steps{display:grid; grid-template-columns:repeat(5,1fr); gap:12px}
+  .step{border:1px dashed var(--border); border-radius:14px; padding:14px; background:rgba(16,24,46,.55)}
+  .step b{display:inline-block; width:26px; height:26px; border-radius:8px; background:linear-gradient(135deg,var(--accent),var(--accent-2));
+          color:#00121a; text-align:center; line-height:26px; font-weight:800; margin-right:8px}
+  @media (max-width:980px){ .steps{grid-template-columns:1fr 1fr} }
+  @media (max-width:520px){ .steps{grid-template-columns:1fr} }
+  /* Pricing */
+  .pricing{display:grid; grid-template-columns:1fr .9fr; gap:16px}
+  .plan{padding:20px; border-radius:16px; border:1px solid var(--border); background:linear-gradient(180deg,rgba(30,43,77,.55),rgba(16,27,52,.6))}
+  .price{font-size:clamp(30px,4vw,42px); font-weight:800; margin:.2rem 0}
+  .plan ul{margin:10px 0 0; padding:0 0 0 18px; color:#b6c3d9}
+  .plan li{margin:.28rem 0}
+  .kicker{color:#93c5fd; font-weight:700; letter-spacing:.25px; font-size:.9rem}
+  @media (max-width:980px){ .pricing{grid-template-columns:1fr} }
+  /* FAQ */
+  .faq .q{border:1px solid var(--border); border-radius:12px; background:rgba(16,26,48,.55); padding:14px 16px}
+  .faq details{margin:10px 0}
+  .faq summary{cursor:pointer; list-style:none; font-weight:700}
+  .faq summary::-webkit-details-marker{display:none}
+  .faq p{margin:.5rem 0 0; color:#c6d4ea}
+  /* Footer */
+  .footer{padding:26px 0 40px; border-top:1px solid var(--border); color:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<div class="nav">
+  <div class="wrap navin">
+    <div class="brand"><i></i> Automated Composite Builder</div>
+    <div class="navlinks">
+      <a href="#features" class="btn ghost small">Features</a>
+      <a href="#pricing" class="btn ghost small">Pricing</a>
+      <a href="builder.html" class="btn primary small">Launch Builder</a>
+    </div>
+  </div>
+</div>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="wrap">
+    <div style="max-width:880px">
+      <div class="kicker">Built for school photographers</div>
+      <h1>Design class composites in minutes — perfectly sized for print, beautifully consistent every time.</h1>
+      <p>Drop in headshots, pick a background, choose rows/columns, sort from CSV (grade, teacher, last, first), and export exact-pixel PNGs for 10×8, 8×10, 15×12, or 20×16 at 300 DPI. Everything runs in the browser — your images never leave your computer.</p>
+      <div class="cta">
+        <a href="builder.html" class="btn primary">Launch the Builder</a>
+        <a href="#pricing" class="btn">Get Pro License</a>
+      </div>
+
+      <div class="trust">
+        <div class="chip">4×5 tiles (auto crop)</div>
+        <div class="chip">CSV naming + multi-level sort</div>
+        <div class="chip">Center-band & top titles</div>
+        <div class="chip">10 built-in studio backgrounds</div>
+      </div>
+
+      <div class="board">
+        <!-- swap for your favorite screenshot -->
+        <img src="Example_Center_Text_Composite_8x10Blue.png" alt="Composite example with center title band" />
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="wrap">
+    <h2>Why studios choose Automated Composite Builder</h2>
+    <p class="muted" style="margin-bottom:16px">Purpose-built for school composites, tuned for speed, accuracy, and print-perfect output.</p>
+
+    <div class="grid-3">
+      <div class="card">
+        <h3>Instant layouts</h3>
+        <p>Set rows/columns or let auto-layout maximize tile size. Gutter and margins give you precise control, and the grid respects the center-band title when used.</p>
+      </div>
+      <div class="card">
+        <h3>CSV-driven naming & sort</h3>
+        <p>Map <em>First</em>, <em>Last</em>, <em>Grade</em>, <em>Teacher</em>, and optional <em>Filename</em>. Sort by up to three fields — e.g. Grade → Last → First — or preserve CSV row order.</p>
+      </div>
+      <div class="card">
+        <h3>Drag, drop, delete</h3>
+        <p>Drag thumbnails to fine-tune order and remove individual images with a hover “×”. No more re-uploads just to edit a row.</p>
+      </div>
+      <div class="card">
+        <h3>Titles that fit your style</h3>
+        <p>1–3 line titles (School, Grade, Year) at the top or in a center band. Add a school logo (left/center/right) and an optional © studio credit at the bottom.</p>
+      </div>
+      <div class="card">
+        <h3>10 built-in backgrounds</h3>
+        <p>Classic textured looks in light, gray, navy, and charcoal — plus a quick option to upload a custom backdrop when you need it.</p>
+      </div>
+      <div class="card">
+        <h3>Print-perfect exports</h3>
+        <p>Exact pixel output for 10×8, 8×10, 15×12, and 20×16 at 300 DPI. What you see on canvas is what you’ll deliver to labs and yearbook teams.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GALLERY -->
+<section>
+  <div class="wrap">
+    <h2>Results your schools will love</h2>
+    <p class="muted" style="margin-bottom:16px">A few samples created with the builder.</p>
+    <div class="gallery">
+      <img src="composite (2).png" alt="Composite example — gray background, top title" />
+      <img src="Example_Center_Text_Composite_8x10.png" alt="Composite example — center band title on gray background" />
+      <img src="Example_Center_Text_Composite_8x10Blue.png" alt="Composite example — center band title on blue background" />
+      <img src="00070.jpg" alt="Sample headshot 1" />
+      <img src="00074.jpg" alt="Sample headshot 2" />
+      <img src="Example_Center_Text_Composite_8x10Blue.png" alt="Composite example repeat" />
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section>
+  <div class="wrap">
+    <h2>How it works</h2>
+    <div class="steps">
+      <div class="step"><b>1</b> Upload headshots (drag-and-drop). The builder center-crops to 4×5 automatically.</div>
+      <div class="step"><b>2</b> Load a CSV (optional) with first/last/grade/teacher/filename to attach names and sort logic.</div>
+      <div class="step"><b>3</b> Choose layout, background, title style, and (optionally) school logo & studio credit.</div>
+      <div class="step"><b>4</b> Drag to fine-tune order, or remove any image with a hover “×”.</div>
+      <div class="step"><b>5</b> Generate & export exact-pixel PNGs ready for print or yearbook submission.</div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="wrap">
+    <h2>Simple annual license</h2>
+    <p class="muted" style="margin-bottom:14px">Unlimited composites. Runs fully in your browser. Free updates during your license term.</p>
+
+    <div class="pricing">
+      <div class="plan">
+        <div class="kicker">Pro License</div>
+        <div class="price" id="price">$199/yr</div>
+        <p class="muted" style="margin:0 0 10px">One studio seat • unlimited composites</p>
+        <ul>
+          <li>4×5 tiles, auto crop & precise gutters/margins</li>
+          <li>CSV naming + multi-level sort (grade, teacher, last, first)</li>
+          <li>1–3 line titles (top or center band) + logo (L/C/R)</li>
+          <li>10 built-in backgrounds + custom upload</li>
+          <li>Exact-pixel PNG export (10×8, 8×10, 15×12, 20×16 @ 300 DPI)</li>
+          <li>Drag to reorder, remove images individually</li>
+          <li>All processing in-browser — images never leave your machine</li>
+        </ul>
+        <div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap">
+          <a href="builder.html" class="btn primary">Launch Builder</a>
+          <a href="#" class="btn">Buy License</a>
+        </div>
+      </div>
+
+      <div class="plan">
+        <h3 style="margin:.2rem 0 .6rem">What’s included</h3>
+        <div class="card" style="margin:0 0 10px; background:rgba(20,32,64,.55)">
+          <h3>Studio-ready features</h3>
+          <p>Presets for popular print sizes, center-band logic that <em>reserves real space</em> in the grid, school logo placement (left/center/right), and optional © studio credit along the bottom center.</p>
+        </div>
+        <div class="card" style="background:rgba(20,32,64,.55)">
+          <h3>Privacy by design</h3>
+          <p>All image layout and rendering is client-side. There’s no upload, queue, or cloud processing — perfect for school privacy policies and fast turnarounds.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq">
+  <div class="wrap">
+    <h2>FAQ</h2>
+    <details class="q">
+      <summary>Do my photos or CSV ever leave my computer?</summary>
+      <p>No. Everything runs locally in your browser. Nothing is uploaded to a server.</p>
+    </details>
+    <details class="q">
+      <summary>Which CSV headers are supported?</summary>
+      <p><code>first</code>, <code>last</code> (or <code>name</code>), plus optional <code>filename</code>, <code>grade</code>, and <code>teacher</code>. Sorting can be Grade → Teacher → Last → First or any combo of three.</p>
+    </details>
+    <details class="q">
+      <summary>Can I drag to reorder or remove a single image?</summary>
+      <p>Yes. Drag thumbnails to change order and click the hover “×” to remove a single image without re-uploading.</p>
+    </details>
+    <details class="q">
+      <summary>What export sizes are supported?</summary>
+      <p>10×8, 8×10, 15×12, and 20×16 (all at 300 DPI) with exact pixel dimensions suitable for lab and yearbook delivery.</p>
+    </details>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="wrap" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap">
+    <div class="muted">© <span id="yr"></span> Automated Composite Builder</div>
+    <div class="navlinks">
+      <a href="builder.html" class="btn primary small">Launch Builder</a>
+      <a href="#pricing" class="btn small">Buy License</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Single source of truth for price — change here
+  const PRICE = "$199/yr"; // ← set your annual fee
+  document.getElementById("price").textContent = PRICE;
+  document.getElementById("yr").textContent = new Date().getFullYear();
+
+  // Smooth scroll for same-page anchor links
+  document.querySelectorAll('a[href^="#"]').forEach(a=>{
+    a.addEventListener('click', e=>{
+      const id = a.getAttribute('href');
+      if(id.length>1){
+        e.preventDefault();
+        document.querySelector(id)?.scrollIntoView({behavior:'smooth', block:'start'});
+      }
+    });
+  });
+</script>
+</body>
+</html>
