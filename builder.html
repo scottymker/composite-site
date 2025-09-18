@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Automated Composite Builder (10×8 with 4×5 tiles)</title>
+<title>Automated Composite Builder</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -59,14 +59,13 @@
   #output{padding:16px; display:grid; gap:16px}
   canvas{width:100%; height:auto; image-rendering:crisp-edges; background:#fff; border-radius:8px}
 
-  /* hide native file inputs used by custom buttons */
   .hidden-file{display:none}
 </style>
 </head>
 <body>
 <header>
   <h1>Automated Composite Builder</h1>
-  <p>Tiles forced to <strong>4×5</strong>. Default 10×8″ @ 300 DPI (3000×2400 px). Uploads → Settings → Generate.</p>
+  <p>Tiles forced to <strong>4×5</strong>. Uploads → Settings → Generate. Default 10×8″ @ 300 DPI (3000×2400 px).</p>
 </header>
 
 <div class="wrap">
@@ -80,7 +79,7 @@
           <strong>Drag & drop photos</strong> here or
           <label for="filePick" class="btn" role="button">Browse</label>
           <input id="filePick" type="file" accept="image/*" multiple>
-          <div class="small" style="margin-top:8px">Drag thumbnails to set the exact order used in the composite.</div>
+          <div class="small" style="margin-top:8px">Drag thumbnails to set exact order. Click “×” to remove a photo.</div>
         </div>
         <div id="thumbs" class="thumbs" aria-live="polite"></div>
       </div>
@@ -186,6 +185,10 @@
           </div>
           <div class="row">
             <div style="flex:1"><label>Background color (fallback)<input id="bgColor" type="color" value="#ffffff"/></label></div>
+            <div style="flex:1; display:flex; align-items:end"><label style="display:flex;align-items:center;gap:8px">
+              <input id="fitOne" type="checkbox">
+              Fit all on 1 page
+            </label></div>
           </div>
         </div>
       </div>
@@ -281,6 +284,7 @@
   const marginEl = document.getElementById('margin');
   const gutterEl = document.getElementById('gutter');
   const bgColorEl = document.getElementById('bgColor');
+  const fitOneEl = document.getElementById('fitOne');
 
   const titleLinesEl = document.getElementById('titleLines');
   const titlePosEl   = document.getElementById('titlePos');
@@ -388,7 +392,7 @@
     images.forEach((o,i)=>o._order=i);
   }
 
-  // CSV + sorting (ascending by default)
+  // CSV + sorting (ascending)
   csvPick.addEventListener('change', async (e)=>{
     const file = e.target.files?.[0];
     if(!file){ csvPick.value=''; return; }
@@ -591,7 +595,7 @@
     logoPick.value='';
   });
 
-  // Backgrounds (built-ins + optional custom)
+  // Backgrounds
   async function initBackgrounds(){
     const files = Array.from({length:10}, (_,i)=>`Background${i+1}.jpg`);
     const loaded = await Promise.all(files.map((src, i)=>loadSrcAsImage(src, `Background ${i+1}`)));
@@ -603,7 +607,7 @@
     return new Promise((resolve,reject)=>{
       const img = new Image();
       img.onload = ()=> resolve({img, w:img.naturalWidth, h:img.naturalHeight, label, url:src, isObjectUrl:false});
-      img.onerror = reject;
+      img.onerror = ()=> resolve({img:new Image(), w:0, h:0, label, url:src, isObjectUrl:false}); // tolerate missing files
       img.src = src;
     });
   }
@@ -693,9 +697,13 @@
       bandH = textBlockH + 2*bandPad;
     }
 
+    const alignTop = (titlePlacement === 'top');
+    const fitAll   = !!fitOneEl.checked;
+
     const layout = paginateTilesCenterAware(
       images.length, wantedCols, wantedRows,
-      contentW, contentH, G, labelPad, bandH
+      contentW, contentH, G, labelPad, bandH,
+      alignTop, fitAll
     );
     if (layout.tilesPerPage === 0){ alert('Zero tiles per page with current settings.'); return; }
 
@@ -773,12 +781,12 @@
 
         drawCropped4x5(ctx, imgObj.img, x, y, cell.tileW, cell.tileH);
 
-        const labelPad = (showNames ? Math.ceil(namePx * 1.35) : 0);
-        if (labelPad){
+        const labelPadDraw = (showNames ? Math.ceil(namePx * 1.35) : 0);
+        if (labelPadDraw){
           const name = (imgObj.name || [imgObj.first, imgObj.last].filter(Boolean).join(' ').trim());
           if (name){
             const tx = x + cell.tileW/2;
-            const ty = y + cell.tileH + Math.max(4, Math.round(labelPad*0.18));
+            const ty = y + cell.tileH + Math.max(4, Math.round(labelPadDraw*0.18));
             ctx.lineWidth = textStroke; ctx.strokeStyle = stroke; ctx.strokeText(name, tx, ty);
             ctx.fillStyle = nameColor; ctx.fillText(name, tx, ty);
           }
@@ -786,15 +794,15 @@
       }
 
       // Studio credit
-      const studio = (studioEl.value||'').trim();
-      if (studio){
+      const studioNow = (studioEl.value||'').trim();
+      if (studioNow){
         ctx.save();
         ctx.textAlign='center'; ctx.textBaseline='alphabetic';
         ctx.font = `600 ${studioPx}px Inter, Arial, sans-serif`;
         ctx.lineWidth = 1.5;
         ctx.strokeStyle = 'rgba(0,0,0,.6)';
         ctx.fillStyle = '#ffffff';
-        const text = `© ${studio}`;
+        const text = `© ${studioNow}`;
         const y = H - M - 4;
         ctx.strokeText(text, W/2, y);
         ctx.fillText(text, W/2, y);
@@ -839,73 +847,95 @@
     return lines;
   }
 
-  function paginateTilesCenterAware(count, wantedCols, wantedRows, contentW, contentH, G, labelPad, bandH){
+  // NEW paginator (rows work, “fit all”, and top-align option)
+  function paginateTilesCenterAware(
+    count, wantedCols, wantedRows, contentW, contentH, G, labelPad, bandH,
+    alignTop = false, fitAll = false
+  ){
     const ratio = 4/5;
-    const autoC = wantedCols===0, autoR = wantedRows===0;
-    const effH = contentH - bandH;
+    const autoC = wantedCols === 0, autoR = wantedRows === 0;
+
+    const effH = contentH - (bandH > 0 ? bandH : 0);
     if (effH <= 0) return {pageCount:0, tilesPerPage:0, pagePlacements:[], baseYOffset:0, bandTopWithin:0};
 
     function score(c, r){
       let tileW = (contentW - G*(c-1)) / c;
       let tileH = tileW / ratio;
       let cellH = tileH + labelPad;
+
       const neededH = r*cellH + Math.max(0,(r-1))*G;
       if (neededH > effH){
         const s = effH / neededH;
         tileW *= s; tileH *= s; cellH *= s;
       }
-      return {tileW, tileH, cellH, perPage:c*r};
+      return {tileW, tileH, cellH, perPage: c*r};
     }
 
     let best=null, bestC=1, bestR=1;
-    if (!autoC && !autoR){ bestC=Math.max(1,wantedCols); bestR=Math.max(1,wantedRows); best=score(bestC,bestR); }
-    else{
-      let Cmin = autoC?1:wantedCols, Cmax = autoC?16:wantedCols;
-      let Rmin = autoR?1:wantedRows, Rmax = autoR?20:wantedRows;
+    const Cmin = autoC ? 1 : wantedCols, Cmax = autoC ? 32 : wantedCols;
+    const Rmin = autoR ? 1 : wantedRows, Rmax = autoR ? 32 : wantedRows;
+
+    if (!autoC && !autoR){
+      let c = wantedCols, r = wantedRows;
+      while (fitAll && (c*r) < count && c < 64) c++;
+      bestC=c; bestR=r; best = score(bestC, bestR);
+    } else {
       let bestArea=-1;
-      for(let C=Cmin; C<=Cmax; C++){
-        for(let R=Rmin; R<=Rmax; R++){
-          const s=score(C,R); if(s.perPage<1) continue;
-          const area=s.tileW*s.tileH;
-          const better = (area>bestArea) || (area===bestArea && s.perPage>(best?.perPage||0)) || (area===bestArea && s.perPage===(best?.perPage||0) && C<(bestC||1));
-          if(better){ bestArea=area; best=s; bestC=C; bestR=R; }
+      for (let C=Cmin; C<=Cmax; C++){
+        for (let R=Rmin; R<=Rmax; R++){
+          if (fitAll && (C*R) < count) continue;
+          const s = score(C,R);
+          if (s.perPage < 1) continue;
+          const area = s.tileW*s.tileH;
+          const better =
+            (area > bestArea) ||
+            (area === bestArea && s.perPage > (best?.perPage||0)) ||
+            (area === bestArea && s.perPage === (best?.perPage||0) && C < (bestC||1));
+          if (better){ bestArea = area; best = s; bestC = C; bestR = R; }
         }
+      }
+      if (!best && fitAll){
+        let C = Math.max(1, wantedCols || 1);
+        let R = Math.ceil(count / C);
+        bestC = C; bestR = R; best = score(C,R);
       }
     }
 
-    if(!best || best.tileW<=0 || best.tileH<=0) return {pageCount:0, tilesPerPage:0, pagePlacements:[], baseYOffset:0, bandTopWithin:0};
+    if(!best || best.tileW<=0 || best.tileH<=0){
+      return {pageCount:0, tilesPerPage:0, pagePlacements:[], baseYOffset:0, bandTopWithin:0};
+    }
 
-    const rowsTop = Math.floor(bestR/2);
-    const rowsBottom = bestR - rowsTop;
+    const rowsTop    = (bandH > 0) ? Math.floor(bestR/2) : bestR;
+    const rowsBottom = (bandH > 0) ? (bestR - rowsTop)    : 0;
 
-    const topH = rowsTop * best.cellH + Math.max(0, rowsTop-1) * G;
-    const bottomH = rowsBottom * best.cellH + Math.max(0, rowsBottom-1) * G;
+    const topH    = rowsTop    * best.cellH + Math.max(0, rowsTop   -1)*G;
+    const bottomH = rowsBottom * best.cellH + Math.max(0, rowsBottom-1)*G;
 
-    const usedH = topH + bandH + bottomH;
-    const baseYOffset = Math.max(0, Math.floor((contentH - usedH) / 2));
-    const bandTopWithin = topH;
+    const usedH = (bandH > 0) ? (topH + bandH + bottomH) : (bestR*best.cellH + Math.max(0,bestR-1)*G);
+    const baseYOffset = alignTop ? 0 : Math.max(0, Math.floor((contentH - usedH) / 2));
+    const bandTopWithin = (bandH > 0) ? topH : 0;
 
-    const perPage = Math.max(1, bestC*bestR);
-    const pageCount = Math.ceil(count / perPage);
+    const perPage   = Math.max(1, bestC*bestR);
+    const pageCount = fitAll ? 1 : Math.ceil(count / perPage);
     const placements = [];
 
-    for(let p=0; p<pageCount; p++){
-      const start=p*perPage, end=Math.min(count,start+perPage), cells=[];
-      for(let i=start; i<end; i++){
+    for (let p=0; p<pageCount; p++){
+      const start = p*perPage, end = Math.min(count, start + perPage), cells=[];
+      for (let i=start; i<end; i++){
         const k=i-start, r=Math.floor(k/bestC), c=k%bestC;
-        const x=c*(best.tileW+G);
+        const x = c*(best.tileW+G);
         let yRel;
-        if (bandH>0){
-          if (r < rowsTop){
+
+        if (bandH > 0){
+          if (r < rowsTop) {
             yRel = r*(best.cellH+G);
           } else {
             yRel = topH + bandH + (r-rowsTop)*(best.cellH+G);
           }
         } else {
-          const gridH = bestR*best.cellH + Math.max(0,bestR-1)*G;
-          const centerOffset = Math.max(0, Math.floor((contentH - gridH)/2));
-          yRel = centerOffset + r*(best.cellH+G);
+          yRel = (alignTop ? 0 : Math.max(0, Math.floor((contentH - usedH)/2))) + r*(best.cellH+G);
         }
+
         cells.push({x, y: yRel, tileW:best.tileW, tileH:best.tileH, cellH:best.cellH, index:i});
       }
       placements.push(cells);
