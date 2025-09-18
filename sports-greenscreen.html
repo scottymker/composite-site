@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Green‑Screen Sports Templater – MVP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --ink:#0b1020; --bg:#0d1117; --panel:#121826; --muted:#8b95a7; --accent:#0ea5e9; --good:#16a34a; --warn:#f59e0b;
+      --card:#0f1626; --border:#1f2b44; --radius:14px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,#0b1220,#0a0f1a 60%);color:#e6eaf2;font:14px/1.4 Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
+    h1{font:700 22px/1 Inter;margin:0 0 8px}
+    h2{font:600 14px/1 Inter;letter-spacing:.02em;margin:0 0 6px;color:#cfd6e6}
+    .wrap{display:grid;grid-template-columns:320px 1fr;gap:16px;max-width:1300px;margin:16px auto;padding:0 16px}
+    .panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:12px;box-shadow:0 1px 0 rgba(255,255,255,.03),0 10px 30px rgba(0,0,0,.25)}
+    .row{display:flex;gap:8px;align-items:center}
+    label{font:600 12px/1 Inter;color:#a9b3c7}
+    input[type="range"]{width:100%}
+    .btn{appearance:none;border:1px solid #2b395c;background:#10182a;color:#e6ecff;border-radius:10px;padding:8px 12px;font-weight:600;cursor:pointer}
+    .btn:hover{border-color:#3a4e80}
+    .btn.primary{background:linear-gradient(180deg,#18a0fb,#0e7bc6);border-color:#1380d6}
+    .btn.ghost{background:transparent}
+    .btn.small{padding:6px 8px;font-size:12px}
+    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+    .thumb{height:52px;border-radius:10px;border:1px solid var(--border);overflow:hidden;cursor:pointer;position:relative}
+    .thumb input{position:absolute;inset:0;opacity:0;cursor:pointer}
+    .thumb .tag{position:absolute;bottom:6px;left:6px;font:700 10px/1 Inter;letter-spacing:.08em;background:rgba(0,0,0,.55);padding:4px 6px;border-radius:6px;color:#fff}
+    .canvas-wrap{display:grid;grid-template-rows:auto 1fr auto;gap:8px;height:calc(100vh - 64px)}
+    .toolbar{display:flex;gap:8px;align-items:center;justify-content:space-between}
+    .stage{display:grid;place-items:center;background:#0a0f1a;border:1px dashed #223153;border-radius:12px;padding:8px;min-height:420px}
+    canvas{max-width:100%;height:auto;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    .cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .input{width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:#0b1220;color:#eef2ff}
+    .seg{display:flex;gap:6px}
+    .seg button{flex:1}
+    .pill{display:inline-block;padding:4px 8px;border:1px solid var(--border);background:#0d1528;border-radius:999px;font:600 12px/1 Inter;color:#d7def1}
+    .k{font:600 11px/1 Inter;color:#9bb3e1}
+    .small{font-size:12px;color:#9aa6bf}
+    .footer{display:flex;gap:8px;justify-content:flex-end}
+    .template-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .preset{border:1px solid var(--border);border-radius:10px;padding:6px;background:#0b1220;cursor:pointer}
+    .preset .name{font:700 11px/1 Inter;color:#e7eeff}
+    .preset:hover{outline:2px solid #23365c}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <aside class="panel" id="controls">
+      <h1>Green‑Screen Sports Templater</h1>
+      <p class="small">Drop a green‑screen subject, pick a style, adjust key, add text, and export a print‑ready PNG.</p>
+
+      <section class="panel" style="padding:10px;margin-top:10px">
+        <h2>1) Subject</h2>
+        <div class="grid">
+          <button class="btn" id="pickSubject">Upload subject</button>
+          <button class="btn ghost" id="clearSubject">Clear</button>
+        </div>
+        <input type="file" id="subjectInput" accept="image/*" hidden />
+        <div class="row" style="margin-top:8px">
+          <label class="k">Scale</label>
+          <input type="range" id="scale" min="10" max="250" value="100" />
+          <span class="k" id="scaleVal">100%</span>
+        </div>
+        <div class="row">
+          <label class="k">X</label>
+          <input type="range" id="offsetX" min="-800" max="800" value="0" />
+          <label class="k">Y</label>
+          <input type="range" id="offsetY" min="-800" max="800" value="0" />
+        </div>
+      </section>
+
+      <section class="panel" style="padding:10px;margin-top:10px">
+        <h2>2) Keying (remove green)</h2>
+        <div class="row"><label class="k">Hue</label><input type="range" id="keyHue" min="0" max="360" value="110"><span class="k" id="hVal">110°</span></div>
+        <div class="row"><label class="k">Tolerance</label><input type="range" id="tol" min="1" max="90" value="35"><span class="k" id="tVal">35</span></div>
+        <div class="row"><label class="k">Feather</label><input type="range" id="feather" min="0" max="8" value="2"><span class="k" id="fVal">2</span></div>
+        <div class="row"><label class="k">Spill</label><input type="range" id="spill" min="0" max="100" value="35"><span class="k" id="sVal">35</span></div>
+      </section>
+
+      <section class="panel" style="padding:10px;margin-top:10px">
+        <h2>3) Template</h2>
+        <div class="template-preview" id="templateList"></div>
+      </section>
+
+      <section class="panel" style="padding:10px;margin-top:10px">
+        <h2>4) Background</h2>
+        <div class="grid" id="bgGrid"></div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn" id="bgUploadBtn">Upload custom</button>
+          <input type="file" id="bgInput" accept="image/*" hidden />
+        </div>
+      </section>
+
+      <section class="panel" style="padding:10px;margin-top:10px">
+        <h2>5) Text</h2>
+        <div class="cols">
+          <div>
+            <label>Line 1</label>
+            <input class="input" id="line1" placeholder="PLAYER NAME" value="JARED CRUMP" />
+          </div>
+          <div>
+            <label>Line 2</label>
+            <input class="input" id="line2" placeholder="TEAM • SPORT" value="BARTRAM TRAIL FOOTBALL" />
+          </div>
+        </div>
+        <div class="cols" style="margin-top:8px">
+          <div>
+            <label>Number</label>
+            <input class="input" id="number" placeholder="55" value="5" />
+          </div>
+          <div>
+            <label>Secondary Tag</label>
+            <input class="input" id="tag" placeholder="BEARS / BR" value="BR BEARS" />
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" style="padding:10px;margin-top:10px">
+        <h2>Export</h2>
+        <div class="row">
+          <label class="k">Size</label>
+          <select id="size" class="input" style="max-width:180px">
+            <option value="1200x1800">4×6 (1200×1800)</option>
+            <option value="1600x2400" selected>5×7 (1600×2400)</option>
+            <option value="2400x3600">8×12 (2400×3600)</option>
+            <option value="3000x4200">10×14 (3000×4200)</option>
+          </select>
+          <button class="btn primary" id="download">Download PNG</button>
+        </div>
+      </section>
+    </aside>
+
+    <main class="canvas-wrap">
+      <div class="toolbar">
+        <div class="pill">Template: <span id="activeTemplate">V1 – Break</span></div>
+        <div class="seg">
+          <button class="btn small" id="snapToCenter">Center Subject</button>
+          <button class="btn small" id="resetAll">Reset</button>
+        </div>
+      </div>
+      <div class="stage"><canvas id="c"></canvas></div>
+      <div class="footer">
+        <span class="small">Tip: Hold <b>Shift</b> and drag on the stage to reposition the subject.</span>
+      </div>
+    </main>
+  </div>
+
+<script>
+// ---------- Utilities
+const $ = sel => document.querySelector(sel);
+const ctx2d = (w,h) => { const c=document.createElement('canvas'); c.width=w; c.height=h; return [c,c.getContext('2d')]; };
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+// ---------- Canvas & State
+let W=1600,H=2400; // default 5x7 portrait
+const canvas = $('#c');
+const ctx = canvas.getContext('2d');
+canvas.width=W; canvas.height=H;
+
+const state = {
+  subjectImg:null, subjScale:1, subjX:0, subjY:0,
+  keyHue:110, tol:35, feather:2, spill:35,
+  bg:null, bgFill:null, 
+  template:'break',
+  text:{ line1:'JARED CRUMP', line2:'BARTRAM TRAIL FOOTBALL', number:'5', tag:'BR BEARS' }
+};
+
+// ---------- Background Presets (10 built‑ins)
+const BG_PRESETS = [
+  {name:'Carbon', css:'repeating-linear-gradient(45deg,#0f1624 0 6px,#0c1320 6px 12px)'},
+  {name:'Nebula', css:'radial-gradient(1200px 800px at 70% 20%, #133a66, transparent), radial-gradient(900px 600px at 20% 80%, #592174, transparent), #09101a'},
+  {name:'Stadium Blue', css:'linear-gradient(180deg,#1b2b4f,#0f1a34)'},
+  {name:'Inferno', css:'radial-gradient(800px 400px at 50% 120%, #c43, transparent), #120b10'},
+  {name:'Grit', css:'radial-gradient(1px 1px at 10% 20%,#20304f 1px,transparent 1px), radial-gradient(1px 1px at 80% 60%,#1a2844 1px,transparent 1px), #0a1020'},
+  {name:'Honeycomb', css:'radial-gradient(circle at 10px 10px, #16233f 0 2px, transparent 3px), radial-gradient(circle at 40px 40px, #122036 0 2px, transparent 3px), #0a1224'},
+  {name:'Steel', css:'linear-gradient(180deg,#2a2f3a,#1a1f28)'},
+  {name:'Smokescreen', css:'radial-gradient(400px 240px at 70% 20%, rgba(255,255,255,.06), transparent), radial-gradient(600px 300px at 30% 70%, rgba(255,255,255,.05), transparent), #0a0f17'},
+  {name:'Buccaneer', css:'linear-gradient(120deg,#0f1941 20%,#0a0f20)'},
+  {name:'Grass Fade', css:'linear-gradient(180deg,#0b1220 50%, #0e3d1b 140%)'}
+];
+
+function buildBgGrid(){
+  const grid = $('#bgGrid');
+  grid.innerHTML='';
+  BG_PRESETS.forEach((b,i)=>{
+    const d = document.createElement('div'); d.className='thumb';
+    d.style.background = b.css; d.title=b.name;
+    d.innerHTML = `<span class="tag">${b.name}</span>`;
+    d.onclick = ()=>{ state.bg=null; state.bgFill=b.css; render(); };
+    grid.appendChild(d);
+  });
+}
+
+// ---------- Template System (simple, layer‑based)
+// Each template returns a function drawing overlays and text
+const TEMPLATES = {
+  break(draw){
+    // left claw stripe + big number
+    draw.overlay(({ctx,W,H})=>{
+      const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#0a0f18'); g.addColorStop(1,'#172447');
+      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+      ctx.globalAlpha=.25; ctx.fillStyle='#fff';
+      ctx.fillRect(0,0,Math.max(120,W*0.075),H);
+      ctx.globalAlpha=1;
+    });
+    draw.text(({text,ctx,W,H})=>{
+      ctx.save();
+      ctx.fillStyle='#ffffff'; ctx.font=`900 ${Math.round(W*0.16)}px Anton`; ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+      ctx.strokeStyle='rgba(0,0,0,.5)'; ctx.lineWidth=6; ctx.strokeText(text.number, W*0.08, H*0.18);
+      ctx.fillText(text.number, W*0.08, H*0.18);
+
+      ctx.font=`900 ${Math.round(W*0.11)}px Anton`; ctx.textAlign='center';
+      const y=H*0.87; // bottom banner
+      // band
+      ctx.fillStyle='rgba(10,15,25,.65)'; ctx.fillRect(W*0.05, y- W*0.12, W*0.90, W*0.14);
+      ctx.strokeStyle='rgba(255,255,255,.15)'; ctx.lineWidth=2; ctx.strokeRect(W*0.05, y- W*0.12, W*0.90, W*0.14);
+      // line1 – big name
+      ctx.fillStyle='#ffffff';
+      ctx.fillText(text.line1.toUpperCase(), W*0.5, y-10);
+      // line2 – small
+      ctx.font=`700 ${Math.round(W*0.035)}px Oswald`; ctx.fillStyle='rgba(255,255,255,.9)';
+      ctx.fillText(text.line2.toUpperCase(), W*0.5, y - W*0.07);
+      ctx.restore();
+    });
+  },
+  honeycomb(draw){
+    draw.overlay(({ctx,W,H})=>{
+      const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#0f0f15'); g.addColorStop(1,'#521111'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+      ctx.globalAlpha=.2; ctx.fillStyle='#fff'; ctx.fillRect(W*0.05,0,W*0.88,H);
+      ctx.globalAlpha=1;
+    });
+    draw.text(({text,ctx,W,H})=>{
+      ctx.save();
+      // vertical last name bar
+      ctx.translate(W*0.1,H*0.08); ctx.rotate(-Math.PI/2);
+      ctx.font=`800 ${Math.round(W*0.07)}px Oswald`; ctx.fillStyle='#ffffff'; ctx.textAlign='left';
+      ctx.fillText((text.line1.split(' ')[1]||text.line1).toUpperCase(), 0,0);
+      ctx.resetTransform();
+      // number box
+      ctx.fillStyle='rgba(0,0,0,.6)'; const bx=W*0.78, by=H*0.75, bw=W*0.16, bh=W*0.16; ctx.fillRect(bx,by,bw,bh);
+      ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=4; ctx.strokeRect(bx,by,bw,bh);
+      ctx.font=`900 ${Math.round(W*0.12)}px Anton`; ctx.textAlign='center'; ctx.fillStyle='#fff';
+      ctx.fillText(text.number, bx+bw/2, by+bh*0.76);
+      // footer name
+      ctx.font=`900 ${Math.round(W*0.09)}px Anton`;
+      ctx.fillText(text.line1.toUpperCase(), W*0.5, H*0.92);
+      ctx.font=`700 ${Math.round(W*0.04)}px Oswald`; ctx.fillStyle='rgba(255,255,255,.9)';
+      ctx.fillText(text.line2.toUpperCase(), W*0.5, H*0.86);
+      ctx.restore();
+    });
+  },
+  burn(draw){
+    draw.overlay(({ctx,W,H})=>{
+      ctx.fillStyle='#220b0b'; ctx.fillRect(0,0,W,H);
+      // simple flame streaks
+      for(let i=0;i<8;i++){
+        const x=W*(0.1+i*0.1), g=ctx.createLinearGradient(x,H,x,H*0.5);
+        g.addColorStop(0,'rgba(255,120,20,.55)'); g.addColorStop(1,'rgba(255,120,20,0)'); ctx.fillStyle=g; ctx.beginPath();
+        ctx.moveTo(x,H); ctx.bezierCurveTo(x-40,H-200,x+40,H-400,x,H-700); ctx.lineTo(x+20,H); ctx.closePath(); ctx.fill();
+      }
+    });
+    draw.text(({ctx,W,H,text})=>{
+      ctx.save();
+      ctx.font=`900 ${Math.round(W*0.11)}px Anton`; ctx.textAlign='center'; ctx.fillStyle='#fff';
+      ctx.fillText(text.line1.toUpperCase(), W*0.5, H*0.92);
+      ctx.font=`700 ${Math.round(W*0.04)}px Oswald`; ctx.fillText(text.line2.toUpperCase(), W*0.5, H*0.86);
+      ctx.font=`900 ${Math.round(W*0.16)}px Anton`; ctx.textAlign='left'; ctx.fillText(text.number, W*0.07, H*0.2);
+      ctx.restore();
+    });
+  },
+  metal(draw){
+    draw.overlay(({ctx,W,H})=>{
+      const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#191c2a'); g.addColorStop(1,'#2d3250'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+      // brushed lines
+      ctx.globalAlpha=.18; ctx.strokeStyle='#fff'; ctx.lineWidth=1; for(let y=0;y<H;y+=4){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+      ctx.globalAlpha=1;
+    });
+    draw.text(({ctx,W,H,text})=>{
+      ctx.save();
+      ctx.font=`900 ${Math.round(W*0.12)}px Anton`; ctx.textAlign='center'; ctx.fillStyle='#e5e9f5';
+      ctx.fillText(text.line1.toUpperCase(), W*0.5, H*0.9);
+      ctx.font=`700 ${Math.round(W*0.04)}px Oswald`; ctx.fillStyle='#cdd6f4';
+      ctx.fillText(text.line2.toUpperCase(), W*0.5, H*0.84);
+      ctx.font=`900 ${Math.round(W*0.18)}px Anton`; ctx.textAlign='right'; ctx.fillStyle='#eaf0ff';
+      ctx.fillText(text.number, W*0.95, H*0.22);
+      ctx.restore();
+    });
+  },
+  buccaneer(draw){
+    draw.overlay(({ctx,W,H})=>{
+      const g=ctx.createLinearGradient(0,0,W,0); g.addColorStop(0,'#0a1132'); g.addColorStop(1,'#0f205a'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+      // diagonal stripe
+      ctx.fillStyle='rgba(255,255,255,.08)';
+      ctx.beginPath(); ctx.moveTo(W*0.2,0); ctx.lineTo(W,0); ctx.lineTo(W*0.86,H); ctx.lineTo(W*0.06,H); ctx.closePath(); ctx.fill();
+    });
+    draw.text(({ctx,W,H,text})=>{
+      ctx.save();
+      ctx.font=`900 ${Math.round(W*0.16)}px Anton`; ctx.textAlign='left'; ctx.fillStyle='#fff';
+      ctx.fillText(text.number, W*0.06, H*0.16);
+      ctx.font=`900 ${Math.round(W*0.11)}px Anton`; ctx.textAlign='center';
+      ctx.fillText(text.line1.toUpperCase(), W*0.5, H*0.92);
+      ctx.font=`700 ${Math.round(W*0.04)}px Oswald`; ctx.fillText(text.line2.toUpperCase(), W*0.5, H*0.86);
+      ctx.restore();
+    });
+  },
+  smokescreen(draw){
+    draw.overlay(({ctx,W,H})=>{
+      ctx.fillStyle='#101418'; ctx.fillRect(0,0,W,H);
+      for(let i=0;i<6;i++){
+        const [c,g]=ctx2d(W,H); const cx=(i%3)*W/3 + W/6, cy=Math.random()*H*0.6 + H*0.1;
+        g.filter='blur(30px)'; g.fillStyle='rgba(255,255,255,.08)'; g.beginPath(); g.ellipse(cx,cy,W*0.35,H*0.15, Math.random()*Math.PI,0,Math.PI*2); g.fill();
+        ctx.drawImage(c,0,0);
+      }
+    });
+    draw.text(({ctx,W,H,text})=>{
+      ctx.save();
+      ctx.font=`900 ${Math.round(W*0.14)}px Anton`; ctx.textAlign='center'; ctx.fillStyle='#fff';
+      ctx.fillText(text.line1.toUpperCase(), W*0.5, H*0.92);
+      ctx.font=`700 ${Math.round(W*0.045)}px Oswald`; ctx.fillStyle='rgba(255,255,255,.95)';
+      ctx.fillText(text.line2.toUpperCase(), W*0.5, H*0.86);
+      ctx.font=`900 ${Math.round(W*0.18)}px Anton`; ctx.textAlign='left'; ctx.fillText(text.number, W*0.08, H*0.2);
+      ctx.restore();
+    });
+  }
+};
+
+const TEMPLATE_LIST = [
+  {id:'break', name:'V1 – Break'},
+  {id:'honeycomb', name:'V1 – Honeycomb'},
+  {id:'burn', name:'V1 – Burn'},
+  {id:'metal', name:'V1 – Metal'},
+  {id:'buccaneer', name:'V1 – Buccaneer'},
+  {id:'smokescreen', name:'V1 – Smoke Screen'}
+];
+
+function buildTemplatePicker(){
+  const host = $('#templateList'); host.innerHTML='';
+  TEMPLATE_LIST.forEach(t=>{
+    const d=document.createElement('button'); d.className='preset';
+    d.innerHTML=`<div class="name">${t.name}</div>`; d.onclick=()=>{state.template=t.id; $('#activeTemplate').textContent=t.name; render();};
+    host.appendChild(d);
+  })
+}
+
+// ---------- Subject Loading
+$('#pickSubject').onclick = ()=> $('#subjectInput').click();
+$('#subjectInput').addEventListener('change', e=>{
+  const f=e.target.files?.[0]; if(!f) return; const img=new Image(); img.onload=()=>{ state.subjectImg=img; state.subjScale=1; state.subjX=0; state.subjY=0; render(); }; img.src=URL.createObjectURL(f);
+});
+$('#clearSubject').onclick=()=>{state.subjectImg=null; render();};
+
+$('#bgUploadBtn').onclick=()=>$('#bgInput').click();
+$('#bgInput').addEventListener('change', e=>{ const f=e.target.files?.[0]; if(!f) return; const img=new Image(); img.onload=()=>{ state.bg=img; state.bgFill=null; render();}; img.src=URL.createObjectURL(f); });
+
+// Sliders
+['scale','offsetX','offsetY','keyHue','tol','feather','spill'].forEach(id=>{
+  const el=$('#'+id); el.addEventListener('input',()=>{ const v=Number(el.value); if(id==='scale'){ state.subjScale=v/100; $('#scaleVal').textContent=v+'%'; } else if(id==='keyHue'){ state.keyHue=v; $('#hVal').textContent=v+'°'; } else if(id==='tol'){ state.tol=v; $('#tVal').textContent=v; } else if(id==='feather'){ state.feather=v; $('#fVal').textContent=v; } else if(id==='spill'){ state.spill=v; $('#sVal').textContent=v; } else { state[id]=v; } render(); });
+});
+['line1','line2','number','tag'].forEach(id=>{ $('#'+id).addEventListener('input',()=>{ state.text[id]=$('#'+id).value; render(); }); });
+$('#size').addEventListener('change',e=>{ const [w,h]=e.target.value.split('x').map(Number); W=w; H=h; canvas.width=W; canvas.height=H; render(); });
+
+$('#snapToCenter').onclick=()=>{state.subjX=0; state.subjY=0; $('#offsetX').value=0; $('#offsetY').value=0; render();};
+$('#resetAll').onclick=()=>{ Object.assign(state,{subjScale:1,subjX:0,subjY:0,keyHue:110,tol:35,feather:2,spill:35, template:'break'}); ['scale','offsetX','offsetY','keyHue','tol','feather','spill'].forEach(id=>$('#'+id).value=id==='scale'?100:({keyHue:110,tol:35,feather:2,spill:35}[id]||0)); $('#activeTemplate').textContent='V1 – Break'; render(); };
+
+// Drag to move (hold Shift)
+let dragging=false,last=null; canvas.addEventListener('pointerdown',e=>{ if(!e.shiftKey) return; dragging=true; last={x:e.clientX,y:e.clientY};});
+window.addEventListener('pointermove',e=>{ if(!dragging) return; const dx=e.clientX-last.x, dy=e.clientY-last.y; last={x:e.clientX,y:e.clientY}; state.subjX+=dx; state.subjY+=dy; $('#offsetX').value=state.subjX; $('#offsetY').value=state.subjY; render(); });
+window.addEventListener('pointerup',()=>dragging=false);
+
+// ---------- Chroma Key (HSV distance around keyHue)
+function drawKeyedSubject(targetCtx){
+  const img=state.subjectImg; if(!img) return;
+  // scale to fit canvas height
+  const scale = (H / img.height) * state.subjScale;
+  const w = img.width * scale, h = img.height * scale;
+  const x = W/2 - w/2 + state.subjX, y = H - h + state.subjY; // anchor feet-ish
+
+  // offscreen render
+  const [buf,bx] = ctx2d(w,h); bx.drawImage(img,0,0,w,h);
+  const im = bx.getImageData(0,0,w,h); const d=im.data; const tol=state.tol, feather=state.feather, spill=state.spill/100; const key=state.keyHue;
+  for(let i=0;i<d.length;i+=4){
+    const r=d[i], g=d[i+1], b=d[i+2];
+    // RGB->HSV
+    const max=Math.max(r,g,b), min=Math.min(r,g,b); let h,s,v; v=max/255; const delta=max-min; s=max===0?0:delta/max; if(delta===0){h=0;} else {
+      switch(max){case r: h=((g-b)/delta)%6; break; case g: h=(b-r)/delta+2; break; default: h=(r-g)/delta+4;}
+      h=Math.round(h*60); if(h<0) h+=360;
+    }
+    const dh=Math.min(Math.abs(h-key),360-Math.abs(h-key));
+    let alpha=1;
+    if(dh<tol){
+      // within key range – compute softness based on distance
+      const t = dh/tol; // 0..1
+      alpha = Math.pow(t, clamp(1+(feather*0.2),1,4));
+      // spill suppression: push green towards neutral
+      d[i] = r + (v*255 - r)*spill*0.5;
+      d[i+1] = g*(1-spill) + (r+b)/2*spill*0.4;
+      d[i+2] = b + (v*255 - b)*spill*0.5;
+    }
+    d[i+3] = Math.round(d[i+3]*alpha);
+  }
+  bx.putImageData(im,0,0);
+  targetCtx.drawImage(buf,x,y);
+}
+
+// ---------- Renderer
+function render(){
+  // BG
+  if(state.bg){ ctx.clearRect(0,0,W,H); ctx.drawImage(state.bg,0,0,W,H); }
+  else if(state.bgFill){ ctx.fillStyle=state.bgFill; ctx.fillRect(0,0,W,H); }
+  else { ctx.fillStyle='#0a0f14'; ctx.fillRect(0,0,W,H); }
+
+  // Template base before subject
+  const draw={ overlay(fn){ fn({ctx,W,H,text:state.text}); }, text(fn){ draw._texts.push(fn); } , _texts:[] };
+  TEMPLATES[state.template](draw);
+  // overlays were already drawn
+
+  // Subject
+  drawKeyedSubject(ctx);
+
+  // Foreground texts (queued)
+  draw._texts.forEach(fn=>fn({ctx,W,H,text:state.text}));
+}
+
+// ---------- Download
+$('#download').onclick=()=>{
+  const a=document.createElement('a'); a.download=(state.text.line1||'poster').replace(/\s+/g,'_')+".png"; a.href=canvas.toDataURL('image/png'); a.click(); };
+
+// ---------- Boot
+buildBgGrid();
+buildTemplatePicker();
+render();
+</script>
+</body>
+</html>
