@@ -87,7 +87,7 @@
       <div>
         <div class="fieldset">
           <div class="subhead">Backgrounds</div>
-          <div class="small" style="margin-bottom:10px">Choose one of the 10 built-ins. (Background 1 is selected by default.)</div>
+          <div class="small" style="margin-bottom:10px">Choose one of the 10 built-ins below. (Background&nbsp;1 is selected by default.)</div>
           <div id="bgList" class="bg-list"></div>
           <div class="row" style="justify-content:flex-end; margin-top:10px">
             <label for="bgCustomPick" class="btn" title="Upload a custom background">Upload Custom</label>
@@ -177,17 +177,18 @@
           </div>
           <div class="row">
             <div style="flex:1"><label>Columns (0 = Auto)<input id="cols" type="number" value="0" min="0" step="1"></label></div>
-            <div style="flex:1"><label>Rows (0 = Auto)<input id="rows" type="number" value="0" min="0" step="1"></label></div>
+            <div style="flex:1; display:flex; align-items:end; gap:8px;">
+              <label style="display:flex; align-items:center; gap:8px; margin:0;">
+                <input id="fitOne" type="checkbox"> Fit all on 1 page
+              </label>
+            </div>
           </div>
           <div class="row">
             <div style="flex:1"><label>Gutter (px)<input id="gutter" type="number" value="24" min="0"></label></div>
             <div style="flex:1"><label>Margins (px)<input id="margin" type="number" value="80" min="0"></label></div>
           </div>
-          <div class="row" style="align-items:center">
+          <div class="row">
             <div style="flex:1"><label>Background color (fallback)<input id="bgColor" type="color" value="#ffffff"/></label></div>
-            <label style="display:flex; align-items:center; gap:.5rem">
-              <input id="fitAll" type="checkbox"> Fit all on 1 page
-            </label>
           </div>
         </div>
       </div>
@@ -279,11 +280,10 @@
   const cw = document.getElementById('cw');
   const ch = document.getElementById('ch');
   const colsEl = document.getElementById('cols');
-  const rowsEl = document.getElementById('rows');
+  const fitOneEl = document.getElementById('fitOne');
   const marginEl = document.getElementById('margin');
   const gutterEl = document.getElementById('gutter');
   const bgColorEl = document.getElementById('bgColor');
-  const fitAllEl  = document.getElementById('fitAll');
 
   const titleLinesEl = document.getElementById('titleLines');
   const titlePosEl   = document.getElementById('titlePos');
@@ -367,7 +367,6 @@
       const label = document.createElement('div'); label.className='label';
       label.textContent = (o.name && o.name.trim()) || o.fileName || `Image ${i+1}`;
       d.appendChild(label);
-
       const rm = document.createElement('button'); rm.className='remove'; rm.type='button'; rm.textContent='×';
       rm.addEventListener('click', (ev)=>{ ev.stopPropagation(); URL.revokeObjectURL(images[i]?.url); images.splice(i,1); refreshThumbs(); btnGen.disabled = images.length===0; updateCsvStatus(); });
       d.appendChild(rm);
@@ -391,7 +390,7 @@
     images.forEach((o,i)=>o._order=i);
   }
 
-  // CSV + sorting
+  // CSV + sorting (ascending only)
   csvPick.addEventListener('change', async (e)=>{
     const file = e.target.files?.[0];
     if(!file){ csvPick.value=''; return; }
@@ -564,9 +563,7 @@
   function sortImages(){
     const keys = [sort1Key.value, sort2Key.value, sort3Key.value].filter(k => k && k !== 'none');
     if (!keys.length) return;
-
     images.forEach((o,i)=>{ o._order = i; if (typeof o._csvIndex !== 'number') o._csvIndex = Number.POSITIVE_INFINITY; });
-
     images.sort((a, b) => {
       for (const k of keys) {
         let cmp = 0;
@@ -576,7 +573,7 @@
         } else {
           cmp = cmpText(getSortVal(a,k), getSortVal(b,k));
         }
-        if (cmp !== 0) return cmp; // ascending only
+        if (cmp !== 0) return cmp;
       }
       if (a._csvIndex !== b._csvIndex) return a._csvIndex - b._csvIndex;
       return a._order - b._order;
@@ -656,8 +653,8 @@
     const M = Math.max(0, parseInt(marginEl.value,10));
     const G = Math.max(0, parseInt(gutterEl.value,10));
 
-    let wantedCols = Math.max(0, parseInt(colsEl.value,10));
-    let wantedRows = Math.max(0, parseInt(rowsEl.value,10));
+    const wantedCols = Math.max(0, parseInt(colsEl.value,10));
+    const fitAll = !!fitOneEl.checked;
 
     const bgColor = bgColorEl.value || '#ffffff';
 
@@ -679,41 +676,34 @@
     const showNames = (showNamesEl.value==='on') || (showNamesEl.value==='auto' && anyNames);
     const labelPad = showNames ? Math.ceil(namePx * 1.35) : 0;
 
+    // Content rect (reserve space for top title if needed)
     let contentX = M, contentY = M, contentW = W - 2*M, contentH = H - 2*M;
 
-    // Title at TOP -> reserve only what's needed and start grid underneath (no centering)
-    let topPad = 0;
     if (titlePlacement === 'top' && headerTexts.length){
       const textBlockH = lineHeight * headerTexts.length;
-      topPad = textBlockH + 24;
+      let topPad = textBlockH + 24;
       if (logo) topPad = Math.max(topPad, Math.ceil(logoH + 20));
       contentY += topPad; contentH -= topPad;
     }
     if (contentW<=0 || contentH<=0){ alert('Canvas too small for chosen margins/title.'); return; }
 
-    // Title in CENTER -> compute band height
+    // Center band reserve height
     let bandH = 0;
     if (titlePlacement === 'center' && headerTexts.length){
       const textBlockH = lineHeight * headerTexts.length;
       bandH = textBlockH + 2*bandPad;
     }
 
-    // Fit-all option can override rows/cols to guarantee one page
-    const fitAll = !!fitAllEl.checked;
-
-    const layout = paginateTilesCenterAware(
-      images.length, wantedCols, wantedRows,
-      contentW, contentH, G, labelPad, bandH,
-      /*startAtTop=*/ titlePlacement === 'top',
-      fitAll
-    );
+    const layout = paginateByColumns({
+      count: images.length,
+      contentW, contentH, gutter:G, labelPad,
+      wantedCols, fitAll, bandH
+    });
     if (layout.tilesPerPage === 0){ alert('Zero tiles per page with current settings.'); return; }
 
     const pageCount = layout.pageCount;
     const placements = layout.pagePlacements;
-    const baseYOffset = layout.baseYOffset;
-    const bandTopWithinContent = layout.bandTopWithin;
-    const bandAbsY = contentY + baseYOffset + bandTopWithinContent;
+    const bandAbsTop = contentY + layout.bandTop;
 
     for(let p=0; p<pageCount; p++){
       const c = document.createElement('canvas');
@@ -732,9 +722,10 @@
         if (logoAlignEl.value==='left') x = M;
         else if (logoAlignEl.value==='center') x = W/2 - w/2;
         else x = W - M - w; // right
+
         const yBase = (titlePlacement==='top')
-          ? M + Math.max(0,(topPad - logoH)/2)
-          : bandAbsY + (Math.max(bandH, logoH) - logoH)/2;
+          ? M + Math.max(0, (H - contentH - 2*M - logoH)/2) // centered inside top pad
+          : bandAbsTop + (Math.max(bandH, logoH) - logoH)/2;
         ctx.drawImage(logo.img, x, yBase, w, logoH);
       }
 
@@ -749,9 +740,10 @@
         ctx.font = `700 ${titlePx}px Inter, Arial, sans-serif`;
 
         if (titlePlacement === 'top'){
-          // draw into the reserved top band
+          // Compute the actual top pad we used:
+          const topPadUsed = (H - 2*M) - contentH;
           const textBlockH = Math.ceil(lineHeight * headerTexts.length);
-          let y = M + Math.max(0,(topPad - textBlockH)/2);
+          let y = M + Math.max(0,(topPadUsed - textBlockH)/2);
           headerTexts.forEach(line=>{
             ctx.strokeText(line, W/2, y);
             ctx.fillText(line, W/2, y);
@@ -759,7 +751,7 @@
           });
         } else {
           const textBlockH = Math.ceil(lineHeight * headerTexts.length);
-          let y = bandAbsY + bandPad + Math.max(0,(bandH - 2*bandPad - textBlockH)/2);
+          let y = bandAbsTop + bandPad + Math.max(0,(bandH - 2*bandPad - textBlockH)/2);
           headerTexts.forEach(line=>{
             ctx.strokeText(line, W/2, y);
             ctx.fillText(line, W/2, y);
@@ -780,16 +772,15 @@
       for (const cell of cells){
         const imgObj = images[cell.index]; if(!imgObj) continue;
         const x = contentX + cell.x;
-        const y = contentY + baseYOffset + cell.y;
+        const y = contentY + cell.y;
 
         drawCropped4x5(ctx, imgObj.img, x, y, cell.tileW, cell.tileH);
 
-        const labelPadNow = (showNames ? Math.ceil(namePx * 1.35) : 0);
-        if (labelPadNow){
+        if (labelPad){
           const name = (imgObj.name || [imgObj.first, imgObj.last].filter(Boolean).join(' ').trim());
           if (name){
             const tx = x + cell.tileW/2;
-            const ty = y + cell.tileH + Math.max(4, Math.round(labelPadNow*0.18));
+            const ty = y + cell.tileH + Math.max(4, Math.round(labelPad*0.18));
             ctx.lineWidth = textStroke; ctx.strokeStyle = stroke; ctx.strokeText(name, tx, ty);
             ctx.fillStyle = nameColor; ctx.fillText(name, tx, ty);
           }
@@ -849,103 +840,88 @@
     return lines;
   }
 
-  // NEW: startAtTop + fitAll logic inside pagination
-  function paginateTilesCenterAware(count, wantedCols, wantedRows, contentW, contentH, G, labelPad, bandH, startAtTop, fitAll){
+  // New: pure column-based paginator that never clips width
+  function paginateByColumns({count, contentW, contentH, gutter, labelPad, wantedCols, fitAll, bandH}){
     const ratio = 4/5;
-    const effH = contentH - bandH;
-    if (effH <= 0) return {pageCount:0, tilesPerPage:0, pagePlacements:[], baseYOffset:0, bandTopWithin:0};
+    const effH = contentH - (bandH||0);
+    if (contentW<=0 || effH<=0) return {pageCount:0, tilesPerPage:0, pagePlacements:[], bandTop:0};
 
-    function score(c, r){
-      let tileW = (contentW - G*(c-1)) / c;
-      let tileH = tileW / ratio;
-      let cellH = tileH + labelPad;
-      const neededH = r*cellH + Math.max(0,(r-1))*G;
-      if (neededH > effH){
-        const s = effH / neededH;
-        tileW *= s; tileH *= s; cellH *= s;
-      }
-      return {tileW, tileH, cellH, perPage:c*r};
+    // helper to compute rows that fit for a given C
+    function rowsThatFit(C){
+      const tileW = (contentW - gutter*(C-1)) / C;
+      if (tileW <= 0) return {rows:0, tileW:0, tileH:0, cellH:0};
+      const tileH = tileW / ratio;
+      const cellH = tileH + labelPad;
+      const rows = Math.max(0, Math.floor( (effH + gutter) / (cellH + gutter) ));
+      return {rows, tileW, tileH, cellH};
     }
 
-    // search columns if auto
-    const autoC = wantedCols===0;
-    const autoR = wantedRows===0;
-
-    let best=null, bestC=1, bestR=1;
-
-    // If "fit all", search for any (C,R) that fits everything on one page; prefer larger tiles, then fewer columns.
-    if (fitAll){
-      let bestArea=-1;
-      for(let C=1; C<=24; C++){
-        for(let R=1; R<=30; R++){
-          const s=score(C,R);
-          if (s.perPage < count) continue; // must fit all
-          const area=s.tileW*s.tileH;
-          const better = (area>bestArea) || (area===bestArea && C<bestC);
-          if (better){ bestArea=area; best=s; bestC=C; bestR=R; }
+    // choose columns
+    let bestC = Math.max(1, wantedCols || 0);
+    if (wantedCols === 0){
+      // try 1..20, maximize tile area but keep at least 1 row
+      let bestArea = -1;
+      for (let C=1; C<=20; C++){
+        const r = rowsThatFit(C);
+        if (r.rows<1) continue;
+        const area = r.tileW * r.tileH;
+        if (fitAll){
+          const neededRows = Math.ceil(count / C);
+          if (r.rows < neededRows) continue; // can't fit all
         }
+        const better = (area>bestArea) || (area===bestArea && C<bestC);
+        if (better){ bestArea=area; bestC=C; }
       }
-      if(!best) return {pageCount:0, tilesPerPage:0, pagePlacements:[], baseYOffset:0, bandTopWithin:0};
-    } else if (!autoC && !autoR){
-      bestC=Math.max(1,wantedCols); bestR=Math.max(1,wantedRows); best=score(bestC,bestR);
-    } else {
-      let Cmin = autoC?1:wantedCols, Cmax = autoC?24:wantedCols;
-      let Rmin = autoR?1:wantedRows, Rmax = autoR?30:wantedRows;
-      let bestArea=-1;
-      for(let C=Cmin; C<=Cmax; C++){
-        for(let R=Rmin; R<=Rmax; R++){
-          const s=score(C,R); if(s.perPage<1) continue;
-          const area=s.tileW*s.tileH;
-          const better = (area>bestArea) || (area===bestArea && s.perPage>(best?.perPage||0)) || (area===bestArea && s.perPage===(best?.perPage||0) && C<(bestC||1));
-          if(better){ bestArea=area; best=s; bestC=C; bestR=R; }
-        }
+      if (bestArea < 0){ // as a fallback, use at least 1 row with widest columns
+        bestC = 1;
       }
-      if(!best) return {pageCount:0, tilesPerPage:0, pagePlacements:[], baseYOffset:0, bandTopWithin:0};
     }
 
-    const rowsTop = Math.floor(bestR/2);
-    const rowsBottom = bestR - rowsTop;
-
-    const topH = rowsTop * best.cellH + Math.max(0, rowsTop-1) * G;
-    const bottomH = rowsBottom * best.cellH + Math.max(0, rowsBottom-1) * G;
-
-    const usedH = (bandH>0) ? (topH + bandH + bottomH) : (bestR*best.cellH + Math.max(0,bestR-1)*G);
-    const baseYOffset = Math.max(0, Math.floor((contentH - usedH) / 2));
-    const bandTopWithin = (bandH>0) ? topH : 0;
-
-    const perPage = Math.max(1, bestC*bestR);
+    const geom = rowsThatFit(bestC);
+    const perPage = Math.max(1, geom.rows * bestC);
     const pageCount = fitAll ? 1 : Math.ceil(count / perPage);
-    const placements = [];
 
+    // vertical centering around optional band
+    const gridH = geom.rows * geom.cellH + Math.max(0, geom.rows-1)*gutter;
+    const remaining = effH - gridH;
+    const topRows = Math.floor(geom.rows/2);
+    const topH = topRows * geom.cellH + Math.max(0, topRows-1)*gutter;
+    const bandTop = (bandH>0) ? ( (remaining/2) + topH ) : 0; // absolute within content
+
+    const placements = [];
     for(let p=0; p<pageCount; p++){
-      const start=p*perPage, end=Math.min(count,start+perPage), cells=[];
+      const start = p*perPage;
+      const end = fitAll ? Math.min(count, count) : Math.min(count, start+perPage);
+      const cells = [];
       for(let i=start; i<end; i++){
-        const k=i-start, r=Math.floor(k/bestC), c=k%bestC;
-        const x=c*(best.tileW+G);
-        let yRel;
+        const k = i-start;
+        const r = Math.floor(k / bestC);
+        const c = k % bestC;
+
+        const x = c * (geom.tileW + gutter);
+        // position rows above and below band if present:
+        let y;
         if (bandH>0){
-          // rows split around the centered band
-          yRel = (r < rowsTop)
-            ? r*(best.cellH+G)
-            : topH + bandH + (r-rowsTop)*(best.cellH+G);
-        } else {
-          // NEW: if title is on top, start at top (no centering gap)
-          if (startAtTop){
-            yRel = r*(best.cellH+G);
+          if (r < topRows){ // above band
+            y = (remaining/2) + r*(geom.cellH+gutter);
           } else {
-            const gridH = bestR*best.cellH + Math.max(0,bestR-1)*G;
-            const centerOffset = Math.max(0, Math.floor((contentH - gridH)/2));
-            yRel = centerOffset + r*(best.cellH+G);
+            const aboveH = topH;
+            const belowIndex = r - topRows;
+            y = (remaining/2) + aboveH + bandH + belowIndex*(geom.cellH+gutter);
           }
+        } else {
+          y = (remaining/2) + r*(geom.cellH+gutter);
         }
-        cells.push({x, y: yRel, tileW:best.tileW, tileH:best.tileH, cellH:best.cellH, index:i});
+
+        cells.push({x, y, tileW:geom.tileW, tileH:geom.tileH, cellH:geom.cellH, index:i});
       }
       placements.push(cells);
     }
 
-    return { pageCount, tilesPerPage: perPage, pagePlacements: placements, baseYOffset, bandTopWithin };
+    return {pageCount, tilesPerPage: perPage, pagePlacements:placements, bandTop};
   }
 
+  // drawing helpers
   function drawCropped4x5(ctx, img, dx, dy, dw, dh){
     const target=4/5, iw=img.naturalWidth||img.width, ih=img.naturalHeight||img.height, r=iw/ih;
     let sx,sy,sw,sh;
